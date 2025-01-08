@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script src="../static/js/preloader.js" defer></script>
+    <style>
+      .sidebar {
+        transition: width 0.3s ease;
+      }
+
+      .main-content {
+        transition: margin-left 0.3s ease;
+      }
+
+      .fullscreen .sidebar {
+        width: 0;
+      }
+
+      .fullscreen .main-content {
+        margin-left: -2%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Customer</h4>
+        </div>
+        <hr class="divider" />
+        <ul class="menu">
+          <li class="menu-item active">
+            <a href="http://64.227.135.38:8010/" id="dashboard-btn"
+              >Dashboard</a
+            >
+          </li>
+          <li class="menu-header">Maps</li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8002/" id="livemap-btn"
+              >Live Map - All Vehicles</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8001/" id="singleVehicle-btn"
+              >Live Map - Single Vehicle</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8006/" id="buttons-btn"
+              >Vehicle List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Driver List</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="{{ url_for('logout') }}" id="icons-btn">
+              <i class="fa fa-sign-out" aria-hidden="true"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </aside>
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a
+                href="javascript:void(0);"
+                class="icon"
+                onclick="toggleSidebar()"
+              >
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.135.38:8010/">Dashboard</a></li>
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img
+                id="company-image"
+                src="{{ url_for('static', filename=session.get('company_image') if session.get('company_image') else 'uploads/default_image.png') }}"
+                alt="Company Image"
+                style="max-width: 200px; height: auto"
+              />
+            </div>
+          </div>
+        </header>
+        <hr class="divider" />
+        <section class="dashboard">
+          <div class="cards">
+            <div class="card" style="background-color: #6261cc">
+              <div class="card-content">
+                <h3>Number of Devices</h3>
+                <p>Users</p>
+              </div>
+              <div class="card-chart">
+                <!-- Placeholder for chart/graph -->
+              </div>
+            </div>
+            <div class="card" style="background-color: #3d99f5">
+              <div class="card-content">
+                <h3>Number of Sim</h3>
+                <p>Income</p>
+              </div>
+              <div class="card-chart">
+                <!-- Placeholder for chart/graph -->
+              </div>
+            </div>
+            <div class="card" style="background-color: #edad21">
+              <div class="card-content">
+                <h3>Number of Customers</h3>
+                <p>Conversion Rate</p>
+              </div>
+              <div class="card-chart">
+                <!-- Placeholder for chart/graph -->
+              </div>
+            </div>
+            <div class="card" style="background-color: #db5d5d">
+              <div class="card-content">
+                <h3>Number of Employees</h3>
+                <p>Sessions</p>
+              </div>
+              <div class="card-chart">
+                <!-- Placeholder for chart/graph -->
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-row">
+            <!-- Graph Container -->
+            <div class="graph-container">
+              <div class="graph-title">Graph</div>
+              <div class="graph-box"></div>
+            </div>
+
+            <!-- Traffic Container -->
+            <div class="traffic-container">
+              <h2>Traffic</h2>
+              <div id="traffic-container">
+                <h2>Live Traffic Updates</h2>
+                <div id="map"></div>
+                <div id="traffic-info">
+                  <div id="scrolling-text">
+                    <p id="traffic-status">Loading traffic information...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Weather Section -->
+            <div class="weather-section">
+              <div class="weather-container">
+                <h1>Weather</h1>
+                <div id="weather">
+                  <p>Loading weather...</p>
+                </div>
+              </div>
+              <div class="datetime-container">
+                <div id="clock"></div>
+                <div id="date"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const apiKey = "365ddab9f6e0165c415605dd9f1178f8";
+
+        function getWeather(lat, lon) {
+          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              displayWeather(data);
+            })
+            .catch((error) => {
+              console.error("Error fetching weather data:", error);
+              document.getElementById("weather").innerHTML =
+                "<p>Failed to fetch weather data.</p>";
+            });
+        }
+
+        function displayWeather(data) {
+          const weatherDiv = document.getElementById("weather");
+          const iconCode = data.weather[0].icon;
+          const weatherHTML = `
+                    <div class="weather-info">
+                        <img class="weather-icon" src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="Weather icon">
+                        <p><strong>${data.name}</strong></p>
+                        <p>${data.weather[0].description}</p>
+                        <p>Temperature: ${data.main.temp} °C</p>
+                        <p>Humidity: ${data.main.humidity}%</p>
+                        <p>Wind Speed: ${data.wind.speed} m/s</p>
+                    </div>
+                `;
+          weatherDiv.innerHTML = weatherHTML;
+          setDayNightBackground();
+        }
+
+        function setDayNightBackground() {
+          const hour = new Date().getHours();
+          const weatherContainer = document.querySelector(".weather-container");
+          const datetimeContainer = document.querySelector(
+            ".datetime-container"
+          );
+          const backgroundColor =
+            hour >= 6 && hour < 18
+              ? "linear-gradient(to right, #eae6ee, #7ca2e7)"
+              : "linear-gradient(to right, #141E30, #243B55)";
+
+          weatherContainer.style.background = backgroundColor;
+          datetimeContainer.style.background = backgroundColor;
+        }
+
+        function getLocation() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                getWeather(lat, lon);
+              },
+              () => {
+                document.getElementById("weather").innerHTML =
+                  "<p>Unable to retrieve your location.</p>";
+              }
+            );
+          } else {
+            document.getElementById("weather").innerHTML =
+              "<p>Geolocation is not supported by your browser.</p>";
+          }
+        }
+
+        function updateClockAndDate() {
+          const now = new Date();
+          const hours = now.getHours().toString().padStart(2, "0");
+          const minutes = now.getMinutes().toString().padStart(2, "0");
+          const seconds = now.getSeconds().toString().padStart(2, "0");
+          const clockStr = `${hours}:${minutes}:${seconds}`;
+
+          const options = {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          };
+          const dateStr = now.toLocaleDateString(undefined, options);
+
+          document.getElementById("clock").textContent = clockStr;
+          document.getElementById("date").textContent = dateStr;
+        }
+
+        getLocation();
+        setInterval(updateClockAndDate, 1000);
+        updateClockAndDate();
+      });
+    </script>
+    <script>
+      let map, trafficLayer;
+
+      function initMap() {
+        const mapOptions = {
+          zoom: 12,
+          center: { lat: 12.9716, lng: 77.5946 }, // Default to Bangalore
+          disableDefaultUI: true,
+        };
+
+        map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+        trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(map);
+
+        // Update traffic status immediately and then every 60 seconds
+        updateTrafficStatus();
+        setInterval(updateTrafficStatus, 60000);
+      }
+
+      function updateTrafficStatus() {
+        // Simulate traffic status updates
+        const trafficConditions = [
+          "Heavy Traffic",
+          "Moderate Traffic",
+          "Light Traffic",
+          "No Traffic",
+        ];
+        const randomStatus =
+          trafficConditions[
+            Math.floor(Math.random() * trafficConditions.length)
+          ];
+        document.getElementById(
+          "traffic-status"
+        ).textContent = `Current Traffic Status: ${randomStatus}`;
+      }
+    </script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A&libraries=visualization,places&callback=initMap"
+      async
+      defer
+    ></script>
+    <script>
+      function toggleSidebar() {
+        document.querySelector(".container").classList.toggle("fullscreen");
+      }
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
+<!-- {% extends 'base.html' %} {% block title %}Admin Dashboard{% endblock %} {%
+block content %}
+<h2>Admin Dashboard</h2>
+<a href="{{ url_for('add_user') }}">Add New User</a>
+<table>
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>
+        <a href="{{ url_for('edit_user', user_id=user._id) }}">Edit</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a href="{{ url_for('logout') }}">Logout</a>
+{% endblock %} -->

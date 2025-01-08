@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Listing</title>
+</head>
+<body>
+    <h1>Data from CordonEV Database</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>IMEI Number</th>
+                <th>CompanyName</th>
+                <th>Driver Name</th>
+                <th>Vehicle Data</th>
+                <th>Device Data</th>
+                <th>Driver Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in merged_data %}
+            <tr>
+                <td>{{ item['IMEI Number'] }}</td>
+                <td>{{ item['Company Name'] }}</td>
+                <td>{{ item['Driver Name'] }}</td>
+                <td>{{ item['Vehicle Data'] }}</td>
+                <td>{{ item['Atlanta Data'] }}</td>
+                <td>{{ item['Driver Data'] }}</td>
+            </tr>
+            {% else %}
+        <tr>
+            <td colspan="8">No data available</td>
+        </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .sidebar {
+        transition: width 0.3s ease;
+      }
+
+      .main-content {
+        transition: margin-left 0.3s ease;
+      }
+
+      .fullscreen .sidebar {
+        width: 0;
+      }
+
+      .fullscreen .main-content {
+        margin-left: -2%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Admin</h4>
+        </div>
+        <hr class="divider" />
+        <ul class="menu">
+          <li class="menu-item active">
+            <a href="http://64.227.135.38:8010/" id="dashboard-btn">Dashboard</a>
+          </li>
+          <li class="menu-item">
+            <a href="{{ url_for('admin_users') }}" id="dashboard-btn">Users</a>
+          </li>
+          <li class="menu-header">Inventory</li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8003/" id="inventory-btn"
+              >Device Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8004/" id="typography-btn"
+              >Sim Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8005/" id="typography-btn"
+              >Employee List</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8007/" id="base-btn">Company List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.135.38:8006/" id="buttons-btn"
+              >Vehicle List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Charts</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="icons-btn">Icons</a>
+          </li>
+        </ul>
+      </aside>
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a
+                href="javascript:void(0);"
+                class="icon"
+                onclick="toggleSidebar()"
+              >
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.135.38:8010/">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img src="profile-placeholder.png" alt="Profile Picture" />
+            </div>
+          </div>
+        </header>
+        <hr class="divider" />
+        <section class="dashboard">
+          <h2>{{ action }} User</h2>
+          <form method="POST" enctype="multipart/form-data">
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value="{{ user.username if user else '' }}"
+              required
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+            />
+
+            <!-- Latitude and Longitude Fields -->
+            <input
+              type="text"
+              name="latitude"
+              placeholder="Latitude"
+              value="{{ user.latitude if user else '13.02071225132524' }}"
+            />
+            <input
+              type="text"
+              name="longitude"
+              placeholder="Longitude"
+              value="{{ user.longitude if user else '77.64785935654147' }}"
+            />
+
+            <!-- Company Name and Address Fields -->
+            <input
+              type="text"
+              name="company_name"
+              placeholder="Company Name"
+              value="{{ user.company_name if user else 'Cordon Telematics' }}"
+            />
+            <input
+              type="text"
+              name="address"
+              placeholder="Address"
+              value="{{ user.address if user else '3rd and 4th Floor, 24/1, 100 Feet Rd, HRBR Layout 1st Block, Balaji Layout, Subbaiahnapalya, Banaswadi, Bengaluru, Karnataka 560043' }}"
+            />
+
+            <!-- File Upload for Company Image -->
+            <label for="company_image">Upload Company Image:</label>
+            <input type="file" name="company_image" accept="image/*" />
+
+            <button type="submit">{{ action }}</button>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

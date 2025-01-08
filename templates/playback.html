@@ -1,0 +1,816 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Path Map</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        #play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #008CBA;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            display: none; /* Hide initially */
+        }
+        #play-button:hover {
+            background-color: #007B9E;
+        }
+    </style>
+</head>
+<body>
+    <form id="vehicle-form">
+        <label for="imei">IMEI:</label>
+        <input type="text" id="imei" name="imei" required>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required>
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required>
+        <button type="submit">Get Path</button>
+    </form>
+    <div id="map"></div>
+    <button id="play-button">Play</button>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A&callback=initMap&libraries=places" async defer></script>
+
+    <script>
+        let map;
+        let pathCoordinates = [];
+        let carMarker;
+        let pathPolyline;
+        let markers = [];
+        let currentIndex = 0;  // To track car position
+        let animationInterval;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: { lat: 0, lng: 0 }, // Default center (updated dynamically)
+            });
+
+            document.getElementById("play-button").addEventListener("click", startCarAnimation);
+        }
+
+        // Convert date from YYYY-MM-DD to DDMMYY
+        function formatDateToDB(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate().toString().padStart(2, '0'); // Day with leading zero
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month with leading zero
+            const year = date.getFullYear().toString().slice(2); // Last two digits of the year
+            return `${day}${month}${year}`;
+        }
+
+        document.getElementById("vehicle-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const imei = document.getElementById("imei").value;
+            const start_date = formatDateToDB(document.getElementById("start_date").value);
+            const end_date = formatDateToDB(document.getElementById("end_date").value);
+
+            fetch(`/get_vehicle_path?imei=${imei}&start_date=${start_date}&end_date=${end_date}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Data received:", data); // Debugging
+                    if (data.length > 0) {
+                        pathCoordinates = data.map(item => ({
+                            lat: item.latitude,
+                            lng: item.longitude,
+                            time: item.time,
+                        }));
+                        plotPathOnMap(pathCoordinates);
+                    } else {
+                        alert("No path data found for the given IMEI and date range.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching path data:", error); // Debugging
+                    alert("Error fetching path data.");
+                });
+        });
+
+        function plotPathOnMap(pathCoordinates) {
+            // Clear previous path and markers
+            if (pathPolyline) pathPolyline.setMap(null);
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+
+            if (pathCoordinates.length > 0) {
+                // Plot the path
+                pathPolyline = new google.maps.Polyline({
+                    path: pathCoordinates,
+                    geodesic: true,
+                    strokeColor: "#FF0000", // Red color for path
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                });
+                pathPolyline.setMap(map);
+
+                // Add start and end markers
+                const startMarker = new google.maps.Marker({
+                    position: pathCoordinates[0],
+                    map: map,
+                    title: `Start: ${pathCoordinates[0].time}`,
+                    icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png", // Green marker
+                });
+                const endMarker = new google.maps.Marker({
+                    position: pathCoordinates[pathCoordinates.length - 1],
+                    map: map,
+                    title: `End: ${pathCoordinates[pathCoordinates.length - 1].time}`,
+                    icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png", // Red marker
+                });
+                markers.push(startMarker, endMarker);
+
+                // Add a car marker at the start position
+                // carMarker = new google.maps.Marker({
+                //     position: pathCoordinates[0],
+                //     map: map,
+                //     icon: 'http://64.227.135.38/caricongreen.png', // Custom car icon
+                //     title: `Car at ${pathCoordinates[0].time}`,
+                // });
+                carMarker = new google.maps.Marker({
+    position: pathCoordinates[0],
+    map: map,
+    icon: {
+        url: 'http://64.227.135.38/caricongreen.png', // Custom car icon
+        scaledSize: new google.maps.Size(40, 40), // Set width and height (e.g., 40x40 pixels)
+    },
+    title: `Car at ${pathCoordinates[0].time}`,
+});
+
+                // Show the play button to animate the car
+                document.getElementById("play-button").style.display = 'block';
+
+                // Adjust the map's viewport to fit the path
+                const bounds = new google.maps.LatLngBounds();
+                pathCoordinates.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds);
+            }
+        }
+
+        function startCarAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval); // Clear any existing animation
+            }
+
+            currentIndex = 0;
+            carMarker.setPosition(pathCoordinates[currentIndex]);
+            animateCar();
+        }
+
+        function animateCar() {
+            if (currentIndex < pathCoordinates.length) {
+                currentIndex++;
+                carMarker.setPosition(pathCoordinates[currentIndex]);
+
+                // Update the map's center to the car's position
+                map.panTo(pathCoordinates[currentIndex]);
+            } else {
+                clearInterval(animationInterval); // Stop when path is complete
+            }
+        }
+
+        // This function will be used to animate the car at intervals
+        setInterval(() => {
+            if (currentIndex < pathCoordinates.length) {
+                currentIndex++;
+                carMarker.setPosition(pathCoordinates[currentIndex]);
+                map.panTo(pathCoordinates[currentIndex]);
+            }
+        }, 1000);  // Car moves every 1 second
+    </script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Path Map</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        #play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #008CBA;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            display: none; /* Hide initially */
+        }
+        #play-button:hover {
+            background-color: #007B9E;
+        }
+    </style>
+</head>
+<body>
+    <form id="vehicle-form">
+        <label for="imei">IMEI:</label>
+        <input type="text" id="imei" name="imei" required>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required>
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required>
+        <button type="submit">Get Path</button>
+    </form>
+    <div id="map"></div>
+    <button id="play-button">Play</button>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A&callback=initMap&libraries=places" async defer></script>
+
+    <script>
+        let map;
+        let pathCoordinates = [];
+        let carMarker;
+        let pathPolyline;
+        let markers = [];
+        let currentIndex = 0; // To track car position
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: { lat: 0, lng: 0 }, // Default center (updated dynamically)
+            });
+
+            document.getElementById("play-button").addEventListener("click", startCarAnimation);
+        }
+
+        // Convert date from YYYY-MM-DD to DDMMYY
+        function formatDateToDB(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate().toString().padStart(2, '0'); // Day with leading zero
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month with leading zero
+            const year = date.getFullYear().toString().slice(2); // Last two digits of the year
+            return `${day}${month}${year}`;
+        }
+
+        document.getElementById("vehicle-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const imei = document.getElementById("imei").value;
+            const start_date = formatDateToDB(document.getElementById("start_date").value);
+            const end_date = formatDateToDB(document.getElementById("end_date").value);
+
+            fetch(`/get_vehicle_path?imei=${imei}&start_date=${start_date}&end_date=${end_date}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Data received:", data); // Debugging
+                    if (data.length > 0) {
+                        pathCoordinates = data.map(item => ({
+                            lat: item.latitude,
+                            lng: item.longitude,
+                            time: item.time,
+                        }));
+                        plotPathOnMap(pathCoordinates);
+                    } else {
+                        alert("No path data found for the given IMEI and date range.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching path data:", error); // Debugging
+                    alert("Error fetching path data.");
+                });
+        });
+
+        function plotPathOnMap(pathCoordinates) {
+            // Clear previous path and markers
+            if (pathPolyline) pathPolyline.setMap(null);
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+
+            if (pathCoordinates.length > 0) {
+                // Define a symbol for the arrow
+                const arrowSymbol = {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 5, // Arrow size
+                    strokeColor: '#0000FF', // Arrow color (blue)
+                };
+
+                // Plot the path with arrows
+                pathPolyline = new google.maps.Polyline({
+                    path: pathCoordinates,
+                    geodesic: true,
+                    strokeColor: "#FF0000", // Red color for path
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                    icons: [
+                        {
+                            icon: arrowSymbol,
+                            offset: "100%", // Arrow starts at the end
+                            repeat: "20px", // Repeats every 20px along the path
+                        },
+                    ],
+                });
+                pathPolyline.setMap(map);
+
+                // Add start and end markers
+                const startMarker = new google.maps.Marker({
+                    position: pathCoordinates[0],
+                    map: map,
+                    title: `Start: ${pathCoordinates[0].time}`,
+                    icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png", // Green marker
+                });
+                const endMarker = new google.maps.Marker({
+                    position: pathCoordinates[pathCoordinates.length - 1],
+                    map: map,
+                    title: `End: ${pathCoordinates[pathCoordinates.length - 1].time}`,
+                    icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png", // Red marker
+                });
+                markers.push(startMarker, endMarker);
+
+                // Add a car marker at the start position
+                carMarker = new google.maps.Marker({
+                    position: pathCoordinates[0],
+                    map: map,
+                    icon: {
+                        url: 'http://64.227.135.38/caricongreen.png', // Custom car icon
+                        scaledSize: new google.maps.Size(40, 40), // Set width and height
+                    },
+                    title: `Car at ${pathCoordinates[0].time}`,
+                });
+
+                // Show the play button to animate the car
+                document.getElementById("play-button").style.display = 'block';
+
+                // Adjust the map's viewport to fit the path
+                const bounds = new google.maps.LatLngBounds();
+                pathCoordinates.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds);
+            }
+        }
+
+        function startCarAnimation() {
+            currentIndex = 0;
+            smoothAnimateCar();
+        }
+
+        function smoothAnimateCar() {
+            if (currentIndex < pathCoordinates.length - 1) {
+                const start = pathCoordinates[currentIndex];
+                const end = pathCoordinates[currentIndex + 1];
+                const steps = 100; // Number of animation steps
+                const stepDuration = 10; // Time per step in ms
+                let stepIndex = 0;
+
+                const latDiff = (end.lat - start.lat) / steps;
+                const lngDiff = (end.lng - start.lng) / steps;
+
+                const animateStep = () => {
+                    if (stepIndex < steps) {
+                        const lat = start.lat + latDiff * stepIndex;
+                        const lng = start.lng + lngDiff * stepIndex;
+
+                        carMarker.setPosition({ lat, lng });
+                        map.panTo({ lat, lng });
+
+                        stepIndex++;
+                        setTimeout(animateStep, stepDuration); // Schedule the next step
+                    } else {
+                        currentIndex++;
+                        smoothAnimateCar(); // Move to the next segment
+                    }
+                };
+
+                animateStep(); // Start the animation
+            } else {
+                console.log("Animation completed");
+            }
+        }
+    </script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Path Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        #vehicle-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            background-color: #008CBA;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #vehicle-form label {
+            font-weight: bold;
+        }
+
+        #vehicle-form input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        #vehicle-form button {
+            padding: 10px 20px;
+            background-color: #006994;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        #vehicle-form button:hover {
+            background-color: #00587a;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #controls-container {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: slide-up 0.5s ease-in-out;
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(50%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .control-button {
+            background-color: #008CBA;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .control-button i {
+            font-size: 18px;
+        }
+
+        .control-button:hover {
+            background-color: #007B9E;
+            transform: translateY(-2px);
+        }
+
+        .control-button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <form id="vehicle-form">
+        <label for="imei">IMEI:</label>
+        <input type="text" id="imei" name="imei" required>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required>
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required>
+        <button type="submit">
+            <i class="fas fa-search"></i> Get Path
+        </button>
+    </form>
+
+    <div id="map"></div>
+
+    <div id="controls-container" style="display: none;">
+        <button id="play-button" class="control-button">
+            <i class="fas fa-play"></i> Play
+        </button>
+        <button id="stop-button" class="control-button">
+            <i class="fas fa-stop"></i> Stop
+        </button>
+        <button id="speed-2x-button" class="control-button">
+            <i class="fas fa-forward"></i> 2X
+        </button>
+        <button id="speed-4x-button" class="control-button">
+            <i class="fas fa-forward"></i> 4X
+        </button>
+        <button id="speed-8x-button" class="control-button">
+            <i class="fas fa-forward"></i> 8X
+        </button>
+    </div>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A&libraries=geometry" async defer></script>
+
+    <script>
+        let map;
+        let pathCoordinates = [];
+        let carMarker;
+        let pathPolyline;
+        let startMarker;
+        let endMarker;
+        let currentIndex = 0;
+        let animationInterval = null;
+        let speedMultiplier = 1;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: { lat: 0, lng: 0 }, // Default center, updated dynamically
+            });
+
+            document.getElementById("play-button").addEventListener("click", startCarAnimation);
+            document.getElementById("stop-button").addEventListener("click", stopCarAnimation);
+            document.getElementById("speed-2x-button").addEventListener("click", () => setSpeed(2));
+            document.getElementById("speed-4x-button").addEventListener("click", () => setSpeed(4));
+            document.getElementById("speed-8x-button").addEventListener("click", () => setSpeed(8));
+        }
+
+    document.getElementById("vehicle-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const userEnteredImei = document.getElementById("imei").value.trim();
+
+    // Ensure only numeric input
+    if (!/^\d+$/.test(userEnteredImei)) {
+        alert("Please enter a valid numeric IMEI number.");
+        return;
+    }
+
+    const start_date = formatDateToDB(document.getElementById("start_date").value);
+    const end_date = formatDateToDB(document.getElementById("end_date").value);
+
+    const fetchUrl = `/get_vehicle_path?imei=${userEnteredImei}&start_date=${start_date}&end_date=${end_date}`;
+    console.log("Fetch URL:", fetchUrl);
+
+    fetch(fetchUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.length > 0) {
+                pathCoordinates = data.map(item => ({
+                    lat: item.latitude,
+                    lng: item.longitude,
+                    time: item.time,
+                }));
+                plotPathOnMap(pathCoordinates);
+            } else {
+                alert("No path data found for the given IMEI and date range.");
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching path data:", error);
+            alert("Error fetching path data. Please check the console for details.");
+        });
+});
+
+    
+        function formatDateToDB(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear().toString().slice(2);
+            return `${day}${month}${year}`;
+        }
+
+        function plotPathOnMap(pathCoordinates) {
+    if (pathPolyline) pathPolyline.setMap(null);
+    if (startMarker) startMarker.setMap(null);
+    if (endMarker) endMarker.setMap(null);
+    if (carMarker) carMarker.setMap(null); // Clear the previous car marker
+
+    if (pathCoordinates.length > 0) {
+        const arrowSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+    scale: 2, // Adjusted scale for smaller arrows
+    strokeColor: '#0000FF', // Arrow color
+    strokeWeight: 2, // Arrow stroke thickness
+};
+
+        // Gradient stroke for polyline
+        const gradientColors = [
+            '#ff0000', // Red
+            '#ff7300', // Orange
+            '#ffd700', // Yellow
+            '#00b300', // Green
+            '#0000ff', // Blue
+        ];
+        const gradientIconSet = gradientColors.map((color, index) => ({
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 3,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: color,
+                strokeWeight: 1,
+            },
+            offset: `${index * 20}%`, // Spread evenly across the line
+        }));
+
+        pathPolyline = new google.maps.Polyline({
+    path: pathCoordinates,
+    geodesic: true,
+    strokeColor: "#FF4500", // Polyline color (orange-red for more contrast)
+    strokeOpacity: 0.9, // Slightly transparent
+    strokeWeight: 3, // Line thickness
+    icons: [
+        {
+            icon: arrowSymbol,
+            offset: "0%", // Start position of the first arrow
+            repeat: "75px", // Distance between arrows
+        },
+    ],
+});
+
+        pathPolyline.setMap(map);
+
+        const bounds = new google.maps.LatLngBounds();
+        pathCoordinates.forEach(coord => bounds.extend(coord));
+        map.fitBounds(bounds);
+
+        // Markers for start and end points
+        startMarker = new google.maps.Marker({
+            position: pathCoordinates[0],
+            map: map,
+            icon: {
+                url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+                scaledSize: new google.maps.Size(30, 30),
+            },
+            title: "Start",
+        });
+
+        endMarker = new google.maps.Marker({
+            position: pathCoordinates[pathCoordinates.length - 1],
+            map: map,
+            icon: {
+                url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                scaledSize: new google.maps.Size(30, 30),
+            },
+            title: "End",
+        });
+
+        carMarker = new google.maps.Marker({
+    position: pathCoordinates[0],
+    map: map,
+    icon: {
+        url: "http://64.227.135.38/icon1.png",
+        scaledSize: new google.maps.Size(50, 50), // Adjust to fit your map scale
+        anchor: new google.maps.Point(25, 25), // Centered anchor for better placement
+    },
+});
+
+        document.getElementById("controls-container").style.display = 'block';
+    }
+}
+
+
+        function calculateBearing(start, end) {
+            const startLatLng = new google.maps.LatLng(start.lat, start.lng);
+            const endLatLng = new google.maps.LatLng(end.lat, end.lng);
+
+            return google.maps.geometry.spherical.computeHeading(startLatLng, endLatLng);
+        }
+
+        function startCarAnimation() {
+            currentIndex = 0;
+            moveCar();
+        }
+
+        function stopCarAnimation() {
+            clearInterval(animationInterval);
+        }
+
+        function setSpeed(multiplier) {
+            speedMultiplier = multiplier;
+        }
+
+        function moveCar() {
+            if (currentIndex < pathCoordinates.length - 1) {
+                const start = pathCoordinates[currentIndex];
+                const end = pathCoordinates[currentIndex + 1];
+                const steps = 100;
+                const stepDuration = 10 / speedMultiplier;
+
+                let stepIndex = 0;
+                const latDiff = (end.lat - start.lat) / steps;
+                const lngDiff = (end.lng - start.lng) / steps;
+
+                const bearing = calculateBearing(start, end);
+
+                animationInterval = setInterval(() => {
+                    if (stepIndex < steps) {
+                        const lat = start.lat + latDiff * stepIndex;
+                        const lng = start.lng + lngDiff * stepIndex;
+
+                        carMarker.setIcon({
+                            url: "http://64.227.135.38/icon1.png",
+                            scaledSize: new google.maps.Size(50, 50),
+                            anchor: new google.maps.Point(20, 20),
+                            rotation: bearing,
+                        });
+
+                        carMarker.setPosition({ lat, lng });
+                        map.panTo({ lat, lng });
+
+                        stepIndex++;
+                    } else {
+                        currentIndex++;
+                        clearInterval(animationInterval);
+                        moveCar();
+                    }
+                }, stepDuration);
+            }
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

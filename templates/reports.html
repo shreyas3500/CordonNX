@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-top: 50px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        input, button, select {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Vehicle Data</h1>
+        <input type="text" id="search-bar" placeholder="Enter Last 4 Digits of Vehicle Registration">
+        <br>
+        <label for="start-date">Start Date:</label>
+        <input type="datetime-local" id="start-date">
+        <label for="end-date">End Date:</label>
+        <input type="datetime-local" id="end-date">
+        <select id="report-type">
+            <option value="travel_path">Travel Path Report</option>
+            <option value="speed">Speed Report</option>
+            <option value="distance">Distance Report</option>
+        </select>
+        <button id="search-btn">Search</button>
+        <div id="vehicle-data"></div>
+    </div>
+
+    <script>
+        // Convert date in DDMMYY format to YYYY-MM-DD
+        const formatDate = (dateString) => {
+            console.log("Raw Date:", dateString);
+            if (!dateString || dateString.length !== 6 || isNaN(dateString)) {
+                console.error("Invalid Date:", dateString);
+                return "Invalid Date";
+            }
+            const day = dateString.substring(0, 2); // Extract day (dd)
+            const month = dateString.substring(2, 4); // Extract month (mm)
+            const year = `20${dateString.substring(4, 6)}`; // Extract year (yy) and prepend "20"
+            return `${day}-${month}-${year}`; // Return formatted date in dd-mm-yyyy
+        };
+
+        // Convert time in HHMMSS format to hh:mm:ss AM/PM
+        const formatTime = (timeString) => {
+            console.log("Raw Time:", timeString);
+            if (!timeString || timeString.length !== 6 || isNaN(timeString)) {
+                console.error("Invalid Time:", timeString);
+                return "Invalid Time";
+            }
+            const hours = parseInt(timeString.substring(0, 2), 10); // Extract hours (hh)
+            const minutes = timeString.substring(2, 4); // Extract minutes (mm)
+            const seconds = timeString.substring(4, 6); // Extract seconds (ss)
+            const ampm = hours >= 12 ? 'PM' : 'AM'; // Determine AM/PM
+            const formattedHours = hours % 12 || 12; // Convert 24-hour format to 12-hour format
+            return `${formattedHours}:${minutes}:${seconds} ${ampm}`; // Return formatted time
+        };
+
+        // Convert coordinates in DDMM.MMMM format to decimal degrees
+        const convertToDecimalDegrees = (value) => {
+            if (!value || isNaN(value)) {
+                console.error("Invalid Coordinate:", value);
+                return "Invalid Coordinate";
+            }
+            const degrees = Math.floor(value / 100); // Extract degrees
+            const minutes = value % 100; // Extract minutes
+            return (degrees + minutes / 60).toFixed(6); // Convert to decimal degrees and format
+        };
+
+        // Format date to DDMMYY format for API request
+        const formatDateForRequest = (dateString) => {
+            const date = new Date(dateString);
+            if (isNaN(date)) return null; // Return null for invalid date
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            return `${day}${month}${year}`; // Format as ddmmyy
+        };
+
+        // Calculate distance between two lat/long points using Haversine formula
+        const calculateDistance = (lat1, lon1, lat2, lon2) => {
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        };
+
+        // Clean and format data for display
+const cleanData = (data) => {
+    const uniqueData = [];
+    const seenDates = new Set();
+    let currentDate = null;
+    let currentDayDistance = 0;
+
+    data.forEach((row, index) => {
+        const dateFormatted = formatDate(row.date); // Format date
+        const timeFormatted = formatTime(row.time); // Format time
+
+        if (dateFormatted === "Invalid Date" || timeFormatted === "Invalid Time") {
+            console.log(`Skipping invalid entry: ${row.date}, ${row.time}`);
+            return; // Skip invalid data
+        }
+
+        // Start a new date entry
+        if (!seenDates.has(dateFormatted)) {
+            if (currentDate && currentDayDistance > 0) {
+                uniqueData.push({ ...currentDate, distanceTravelled: currentDayDistance });
+            }
+            seenDates.add(dateFormatted);
+            currentDate = { date: dateFormatted };
+            currentDayDistance = 0;
+        }
+
+        if (index > 0) {
+            const prevRow = data[index - 1];
+            const distance = Math.max(0, row.odometer - prevRow.odometer); // Calculate distance from odometer
+            currentDayDistance += distance; // Accumulate daily distance
+        }
+
+        // Update current row details
+        currentDate.time = timeFormatted;
+        currentDate.odometer = row.odometer;
+        currentDate.speed = row.speed;
+        currentDate.latitude = row.latitude;
+        currentDate.longitude = row.longitude;
+        currentDate.location = row.location || "Unknown";
+
+        // Push the last entry to the result
+        if (index === data.length - 1) {
+            uniqueData.push({ ...currentDate, distanceTravelled: currentDayDistance });
+        }
+    });
+
+    return uniqueData;
+};
+
+        // Event listener for the search button click
+document.getElementById("search-btn").addEventListener("click", async () => {
+    const searchBar = document.getElementById("search-bar");
+    const vehicleReg = searchBar.value.trim();
+    const vehicleDataDiv = document.getElementById("vehicle-data");
+    vehicleDataDiv.innerHTML = "";
+
+    const startDate = document.getElementById("start-date").value;
+    const endDate = document.getElementById("end-date").value;
+    const reportType = document.getElementById("report-type").value;
+
+    if (!vehicleReg) {
+        alert("Please enter a vehicle registration number.");
+        return;
+    }
+
+    if (!startDate || !endDate) {
+        alert("Please select both start date and end date.");
+        return;
+    }
+
+    const formattedStartDate = formatDateForRequest(startDate);
+    const formattedEndDate = formatDateForRequest(endDate);
+
+    if (!formattedStartDate || !formattedEndDate) {
+        alert("Invalid date format. Please ensure valid dates.");
+        return;
+    }
+
+    const requestBody = {
+        vehicleReg,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        reportType
+    };
+
+    try {
+        const response = await fetch("/search", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Something went wrong.");
+            return;
+        }
+
+        const { atlanta_data } = data;
+
+        if (atlanta_data && atlanta_data.length) {
+            const cleanedData = cleanData(atlanta_data);
+            let htmlContent = `<table><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Speed</th><th>Odometer</th><th>Latitude & Longitude</th></tr></thead><tbody>`;
+
+
+            if (reportType === "speed") {
+     htmlContent = `<table><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Speed</th></tr></thead><tbody>`;
+    
+    cleanedData.forEach(row => {
+        htmlContent += `<tr>
+            <td>${row.date}</td>
+            <td>${row.time}</td>
+            <td>${row.location}</td>
+            <td>${row.speed}</td>
+        </tr>`;
+    });
+            } else if (reportType === "distance") {
+                htmlContent = `<table><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Odometer</th><th>Distance</th></tr></thead><tbody>`;
+                // Show rows with the distance calculation
+                cleanedData.forEach(row => {
+                    htmlContent += `<tr>
+                        <td>${row.date}</td>
+                        <td>${row.time}</td>
+                        <td>${row.location}</td>
+                        <td>${row.odometer}</td>
+                        <td>${row.distanceTravelled.toFixed(2)} km</td>
+                    </tr>`;
+                });
+            } else {
+                // Default - Travel Path Report
+                cleanedData.forEach(row => {
+                    const latDecimal = convertToDecimalDegrees(parseFloat(row.latitude));
+    const lonDecimal = convertToDecimalDegrees(parseFloat(row.longitude));
+
+    console.log(`Row: ${row.date}, Latitude: ${latDecimal}, Longitude: ${lonDecimal}`);
+
+    htmlContent += `<tr>
+        <td>${row.date}</td>
+        <td>${row.time}</td>
+        <td>${row.location}</td>
+        <td>${row.speed}</td>
+        <td>${row.odometer}</td>
+        <td>${latDecimal}, ${lonDecimal}</td>
+    </tr>`;
+
+  
+                });
+            }
+
+            htmlContent += `</tbody></table>`;
+            vehicleDataDiv.innerHTML = htmlContent;
+        } else {
+            vehicleDataDiv.innerHTML = "No data available for the selected criteria.";
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error occurred while fetching data.");
+    }
+});
+
+        
+    </script>
+</body>
+</html>

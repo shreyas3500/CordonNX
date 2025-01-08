@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      /* Removing default button style */
+      .loading-button {
+        margin: 0;
+        height: auto;
+        background: transparent;
+        padding: 0;
+        border: none;
+        position: relative; /* Positioning context for child elements */
+      }
+
+      /* Centering the button container */
+      .loading-button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #000; /* Background color to simulate loading screen */
+      }
+
+      .loading-button {
+        --border-right: 6px;
+        --text-stroke-color: rgba(255, 255, 255, 0.6);
+        --animation-color: #00ffcc; /* Adjust the animation color */
+        --final-color: red; /* Final color for 'X' */
+        --fs-size: 2em;
+        letter-spacing: 3px;
+        text-decoration: none;
+        font-size: var(--fs-size);
+        font-family: "Arial";
+        position: relative;
+        text-transform: uppercase;
+        color: transparent;
+        -webkit-text-stroke: 1px var(--text-stroke-color);
+      }
+
+      /* Hover text (animated) */
+      .hover-text {
+        position: absolute;
+        box-sizing: border-box;
+        content: attr(data-text);
+        color: var(--animation-color);
+        width: 0; /* Initially 0 */
+        inset: 0;
+        border-right: var(--border-right) solid var(--animation-color);
+        overflow: hidden;
+        transition: width 2.5s ease; /* Smooth transition for width */
+        -webkit-text-stroke: 1px var(--animation-color);
+      }
+
+      /* Actual text styling */
+      .actual-text {
+        display: inline-block; /* Prevents collapse */
+        opacity: 1; /* Fully visible */
+      }
+
+      /* Span for 'X' */
+      .final-x {
+        color: transparent; /* Initial color for 'X' */
+        -webkit-text-stroke: 1px transparent; /* Hide stroke */
+        transition: color 0.5s ease; /* Smooth color transition */
+      }
+
+      /* Keyframes for the loading animation */
+      @keyframes loadAnimation {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 72%; /* Full width at the end */
+        }
+      }
+
+      /* Start animations on load */
+      .loading-button:hover .hover-text {
+        animation: loadAnimation 2.5s forwards; /* Run loading animation */
+      }
+
+      /* Trigger color change for 'X' */
+      .loading-button.loading .final-x {
+        color: var(--final-color); /* Change to red */
+        -webkit-text-stroke: 1px transparent; /* Hide stroke */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-button-container">
+      <button class="loading-button" data-text="Cordon X">
+        <span class="actual-text">&nbsp;Cordon&nbsp;</span>
+        <span aria-hidden="true" class="hover-text">&nbsp;Cordon&nbsp;</span>
+        <span class="final-x">&nbsp;X&nbsp;</span>
+      </button>
+    </div>
+    <script>
+      window.onload = function () {
+        const loadingButton = document.querySelector(".loading-button");
+        const hoverText = loadingButton.querySelector(".hover-text");
+
+        // Start loading animation
+        hoverText.style.animation = "loadAnimation 2.5s forwards";
+
+        // Change 'X' color after the loading animation
+        setTimeout(() => {
+          loadingButton.classList.add("loading"); // Add class to change 'X' color
+        }, 2500); // Change color after loading animation completes
+
+        // Hide the hover text after a delay
+        setTimeout(() => {
+          hoverText.style.display = "none"; // Hide the hover text after a delay
+        }, 3000); // Matches the duration of the animation
+      };
+    </script>
+  </body>
+</html>

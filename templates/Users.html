@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='font/ethnocentric-cdnfonts/ethnocentricrg.ttf') }}"
+      rel="stylesheet"
+    />
+
+    <style>
+      .sidebar {
+        transition: width 0.3s ease;
+      }
+
+      .main-content {
+        transition: margin-left 0.3s ease;
+      }
+
+      .fullscreen .sidebar {
+        width: 0;
+      }
+
+      .fullscreen .main-content {
+        margin-left: 0;
+        width: 100%;
+      }
+      @font-face {
+        font-family: "Ethnocentric";
+        src: url("/static/font/ethnocentric-cdnfonts/ethnocentricrg.ttf")
+          format("truetype");
+      }
+      /* Text styling */
+      .text {
+        font-size: 36px;
+        font-family: "Ethnocentric", sans-serif; /* fallback to sans-serif */
+        color: #fff;
+        letter-spacing: 8px;
+        position: relative;
+        z-index: 1;
+        clip-path: inset(0 100% 0 0);
+        animation: revealText 1s ease-in-out 2.5s forwards;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Admin</h4>
+        </div>
+        <hr class="divider" />
+        <ul class="menu">
+          <li class="menu-item">
+            <a href="https://cordonnx.com/admin/dashboard" id="dashboard-btn"
+              >Dashboard</a
+            >
+          </li>
+          <li class="menu-item active">
+            <a href="{{ url_for('admin_users') }}" id="dashboard-btn">Users</a>
+          </li>
+          <li class="menu-header">Maps</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8002/" id="livemap-btn"
+              >Live Map - All Vehicles</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8001/" id="singleVehicle-btn"
+              >Live Map - Single Vehicle</a
+            >
+          </li>
+          <li class="menu-header">Inventory</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8003/" id="inventory-btn"
+              >Device Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8004/" id="typography-btn"
+              >Sim Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8005/" id="typography-btn"
+              >Employee List</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8007/" id="base-btn">Company List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8006/" id="buttons-btn"
+              >Vehicle List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Charts</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="{{ url_for('logout') }}" id="icons-btn">
+              <i class="fa fa-sign-out" aria-hidden="true"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </aside>
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a
+                href="javascript:void(0);"
+                class="icon"
+                onclick="toggleSidebar()"
+              >
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.137.175:8010/">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img src="profile-placeholder.png" alt="Profile Picture" />
+            </div>
+          </div>
+        </header>
+        <hr class="divider" />
+        <section class="dashboard">
+          <div
+            class="bg-gray-200 relative overflow-x-auto shadow-md sm:rounded-lg"
+          >
+            <table
+              class="w-full text-sm text-left rtl:text-right text-gray-500"
+            >
+              <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                <tr>
+                  <th scope="col" class="px-6 py-4 text-lg">Username</th>
+                  <!-- Increased font size -->
+                  <th scope="col" class="px-6 py-4 text-lg">Actions</th>
+                  <!-- Increased font size -->
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr
+                  class="odd:bg-gray-100 even:bg-white border-b transition duration-200 hover:bg-gray-300"
+                >
+                  <th
+                    scope="row"
+                    class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                  >
+                    {{ user.username }}
+                  </th>
+                  <td class="px-6 py-4">
+                    <a
+                      href="{{ url_for('edit_user', user_id=user._id) }}"
+                      class="font-medium text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+                <tr class="h-1 border-b border-gray-400"></tr>
+                <!-- Short line between rows -->
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      function toggleSidebar() {
+        document.querySelector(".container").classList.toggle("fullscreen");
+      }
+    </script>
+  </body>
+</html>
+<!-- <script src="../static/js/preloader.js" defer></script> -->
+<!-- {% extends 'base.html' %} {% block title %}Admin Dashboard{% endblock %} {%
+block content %}
+<h2>Admin Dashboard</h2>
+<a href="{{ url_for('add_user') }}">Add New User</a>
+<table>
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>
+        <a href="{{ url_for('edit_user', user_id=user._id) }}">Edit</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a href="{{ url_for('logout') }}">Logout</a>
+{% endblock %} -->
