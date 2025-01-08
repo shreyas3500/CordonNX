@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      href="{{ url_for('static', filename='font/ethnocentric-cdnfonts/ethnocentricrg.ttf') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+<!--     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/> -->
+    <script src="../static/js/preloader.js" defer></script>
+    <style>
+      body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #212631; /* Default dark mode background */
+    color: #fff;
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for theme switching */
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #212631;
+    padding: 20px;
+    height: 100vh;
+    transition: background-color 0.3s; /* Smooth transition */
+    border-right: 2px solid grey; /* Create the vertical line */
+}
+
+.logo h2 {
+    color: #fff;
+    font-size: 24px;
+    margin-bottom: 30px;
+}
+
+.menu {
+    list-style: none;
+    padding: 0;
+    margin: 0; /* Ensures the menu list has no extra margin */
+}
+
+.menu-item {
+    margin: 20px 0;
+}
+
+.menu-item a {
+    color: #ccc;
+    text-decoration: none;
+    display: block;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s; /* Smooth hover effect */
+}
+
+.menu-item.active a, .menu-item a:hover {
+    color: #fff;
+    background-color: #414569;
+}
+
+.menu-header {
+    color: #aaa;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    background-color: #212631; /* Default dark mode background */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for theme switching */
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.breadcrumb {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb li {
+    color: #ccc;
+    margin-right: 5px;
+}
+
+.breadcrumb a {
+    color: #ccc;
+    text-decoration: none;
+}
+
+.profile-area {
+    display: flex;
+    align-items: center;
+}
+
+.icon {
+    font-size: 18px;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+.profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* Cards */
+.cards {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    background-color: #2a2d37;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 1;
+    transition: background-color 0.3s, transform 0.3s; /* Adds smooth transition effect */
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Lift card slightly on hover */
+    background-color: #3a3d47; /* Darken card background on hover */
+}
+
+.card-content {
+    margin-bottom: 20px;
+}
+
+.card h3 {
+    margin: 0;
+    color: #fff;
+}
+
+.percentage {
+    font-size: 12px;
+}
+
+.positive {
+    color: #4caf50;
+}
+
+.negative {
+    color: #f44336;
+}
+
+/* Traffic Section */
+.traffic {
+    margin-top: 40px;
+}
+
+.traffic h2 {
+    margin: 0;
+}
+
+.graph {
+    background-color: #2a2d37;
+    height: 30px;
+    border-radius: 10px;
+    margin-top: 20px;
+    padding: 20px;
+}
+
+.timeframe-buttons {
+    margin-top: 20px;
+}
+
+.timeframe-buttons button {
+    background-color: #2a2d37;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin-right: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+}
+
+.timeframe-buttons button:hover {
+    background-color: #3a3d47; /* Button darkens on hover */
+}
+
+.timeframe-buttons button.active {
+    background-color: #414569;
+}
+
+/* Divider */
+hr.divider {
+    border: none;
+    height: 2px;
+    background-color: grey; /* Divider color for consistency */
+    margin: 20px 0; /* Margin for spacing around the divider */
+}
+
+/* Light Mode Styles */
+body.light-mode {
+    background-color: #f5f5f5;
+    color: #ffffff;
+}
+
+body.light-mode .main-content {
+    background-color: #e0e0e0; /* Light mode main content */
+}
+
+/* body.light-mode .sidebar {
+    background-color: #fff;
+} */
+
+body.light-mode .menu-item a {
+    color: #ffffff;
+}
+
+body.light-mode .menu-item.active a, body.light-mode .menu-item a:hover {
+    color: #000;
+    background-color: #ddd;
+}
+
+body.light-mode .card {
+    background-color: #fff;
+    color: #000;
+}
+
+body.light-mode .timeframe-buttons button {
+    background-color: #fff;
+    color: #000;
+}
+
+body.light-mode .timeframe-buttons button:hover {
+    background-color: #ddd;
+}
+
+body.light-mode .timeframe-buttons button.active {
+    background-color: #ccc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .cards {
+        flex-direction: column;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+}
+/* From Uiverse.io by alexruix */ 
+/* The switch - the box around the slider */
+.switch {
+    font-size: 17px;
+    position: relative;
+    display: inline-block;
+    width: 3.5em;
+    height: 2em;
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    --background: #2a303d;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--background);
+    transition: .5s;
+    border-radius: 30px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 1.4em;
+    width: 1.4em;
+    border-radius: 50%;
+    left: 10%;
+    bottom: 15%;
+    box-shadow: inset 8px -4px 0px 0px #fff000;
+    background: var(--background);
+    transition: .5s;
+  }
+  
+  input:checked + .slider {
+    background-color: #2a303d;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(100%);
+    box-shadow: inset 15px -4px 0px 15px #fff000;
+  }
+  .dashboard-row {
+    display:flex;
+    justify-content: space-between;
+  }
+  .traffic-container,
+.weather-section,
+.graph-container {
+  flex: 1;
+  margin: 0 10px; /* Adjust spacing between sections */
+}
+  .traffic {
+    width: 90%;
+  }
+  
+  .weather-section {
+    margin-top: 20px;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* Space between weather and datetime */
+  }
+  
+  .weather-container,
+  .datetime-container {
+    margin-right: 10px;
+    width: 60%;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    transition: background 0.5s ease;
+  }
+  #traffic-container {
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%; /* Ensure traffic container takes full width of its container */
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* Space between map and traffic info */
+  }
+
+#traffic-container h2 {
+    margin: 0;
+    padding: 10px;
+    background: #2a303d;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+#traffic-info {
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    height: 20px;
+    overflow: hidden;
+    background: rgb(255, 255, 255);
+}
+
+#scrolling-text {
+    position: absolute;
+    white-space: nowrap;
+    animation: scroll 10s linear infinite;
+    font-size: 1em;
+    color: #000000;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.graph-container {
+    margin-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .graph-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  
+  .graph-box {
+    width: 500px;
+    height: 400px; /* Adjust as needed */
+    background-color: #2a303d; /* Adjust as needed */
+    border-radius: 20px;
+    position: relative;
+  }
+
+
+
+
+
+  /* ////////////////////////////////////////////////////////////// */
+  /* Custom Styles */
+  .container1 {
+    width: 100%;
+    margin: 20px auto;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .input-group input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .input-group button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-left: 10px;
+  }
+
+  .input-group button:hover {
+    background-color: #0056b3;
+  }
+
+  #error-message {
+    color: red;
+    background-color: #f8d7da;
+    padding: 10px;
+    border: 1px solid red;
+    display: none;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #333;
+    color: white;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+  #pagination-controls {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  #pagination-controls button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin: 0 5px;
+    border-radius: 4px;
+  }
+
+  #pagination-controls button:hover {
+    background-color: #0056b3;
+  }
+
+  #countdown-timer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-dialog {
+    margin: 100px auto;
+    width: 80%;
+    max-width: 900px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 15px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+  }
+
+  .modal-body {
+    height: 500px;
+  }
+
+  .close {
+    cursor: pointer;
+    color: white;
+    font-size: 24px;
+  }
+      .sidebar {
+        transition: width 0.3s ease;
+      }
+
+      .main-content {
+        transition: margin-left 0.3s ease;
+      }
+
+      .fullscreen .sidebar {
+        width: 0;
+      }
+
+      .fullscreen .main-content {
+        margin-left: -2%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+     <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Admin</h4>
+        </div>
+        <hr class="divider" />
+        <ul class="menu">
+          <li class="menu-item">
+            <a href="https://cordonnx.com/admin/dashboard" id="dashboard-btn"
+              >Dashboard</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="{{ url_for('admin_users') }}" id="dashboard-btn">Users</a>
+          </li>
+          <li class="menu-header">Maps</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8002/" id="livemap-btn"
+              >Live Map - All Vehicles</a
+            >
+          </li>
+          <li class="menu-item active">
+            <a href="http://64.227.137.175:8001/" id="singleVehicle-btn"
+              >Live Map - Single Vehicle</a
+            >
+          </li>
+          <li class="menu-header">Inventory</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8003/" id="inventory-btn"
+              >Device Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8004/" id="typography-btn"
+              >Sim Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8005/" id="typography-btn"
+              >Employee List</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8007/" id="base-btn">Company List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8006/" id="buttons-btn"
+              >Vehicle List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8009/" id="buttons-btn"
+              >Driver List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Charts</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="{{ url_for('logout') }}" id="icons-btn">
+              <i class="fa fa-sign-out" aria-hidden="true"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </aside>
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a
+                href="javascript:void(0);"
+                class="icon"
+                onclick="toggleSidebar()"
+              >
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.135.38:8010/">Dashboard</a></li>
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img
+                id="company-image"
+                src="{{ url_for('static', filename=session.get('company_image') if session.get('company_image') else 'uploads/default_image.png') }}"
+                alt="Company Image"
+                style="max-width: 200px; height: auto"
+              />
+            </div>
+          </div>
+        </header>
+        <hr class="divider" />
+        <section class="dashboard">
+          <div class="container1">
+            <h1 class="my-3">LIVE Vehicles!</h1>
+
+            <!-- Search Bar -->
+            <div class="input-group mb-3">
+              <input
+                type="text"
+                id="search-input"
+                placeholder="Enter IMEI (Numeric Part)"
+              />
+              <button id="back-button" style="display: none">Back</button>
+            </div>
+
+            <!-- Error Message -->
+            <p id="error-message" class="alert">
+              Error fetching data. Please try again.
+            </p>
+
+            <!-- Table -->
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr id="header-row"></tr>
+                </thead>
+                <tbody id="data-table-body"></tbody>
+              </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="pagination-controls">
+              <button id="prev-btn" onclick="prevPage()">Previous</button>
+              <span id="page-info"></span>
+              <button id="next-btn" onclick="nextPage()">Next</button>
+            </div>
+
+            <!-- Notification and Audio -->
+            <p id="notification" class="notification"></p>
+            <audio id="alert-sound" src="./alert.mp3"></audio>
+          </div>
+
+          <!-- Countdown Timer -->
+          <div id="countdown-timer">
+            Refreshing in: <span id="countdown">30</span> s
+          </div>
+
+          <!-- Modal -->
+          <div id="mapModal" class="modal">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h2 class="modal-title">Vehicle Location</h2>
+                  <span class="close" onclick="closeModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                  <div id="map"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A" async defer></script>
+    <script>
+        let map;
+        let markers = {}; // To hold markers with IMEI as key
+        let routePath = [];
+        let selectedImei = null;
+        let routeHistory = JSON.parse(localStorage.getItem('routeHistory')) || [];
+        let previousStates = {}; 
+        let infoWindow; // Declare the infoWindow globally
+        let isSearching = false; // Flag to track if we are in search mode
+        const searchKey = 'searchImeis'; // Key to store search input in localStorage
+        let highlightedMarker = null;
+        
+        let countdownTime = 30; // Set the initial countdown time in seconds
+    const countdownElement = document.getElementById('countdown');
+    
+    function highlightMarker(marker) {
+    if (highlightedMarker) {
+        // Reset the previously highlighted marker to its original state
+        highlightedMarker.setIcon({
+            url: 'http://64.227.135.38/car1.png',
+            scaledSize: new google.maps.Size(38, 38),
+        });
+        highlightedMarker.setAnimation(null); // Stop any existing animations
+        // Remove the blink effect from the previously highlighted marker
+        highlightedMarker.setOptions({ icon: highlightedMarker.getIcon(), zIndex: 1 });
+    }
+
+    // Highlight the new marker with the blink effect and larger icon
+    marker.setIcon({
+        url: 'http://64.227.135.38/car1.png', // Use the same image or a different one
+        scaledSize: new google.maps.Size(50, 50), // Make the icon larger
+    });
+
+    // Apply blink effect by adding the class
+    marker.setOptions({
+        zIndex: 9999, // Ensure this marker is drawn above other markers
+        icon: {
+            url: 'http://64.227.135.38/car1.png',
+            scaledSize: new google.maps.Size(50, 50),
+            className: 'blink' // Add blink effect
+        }
+    });
+
+    // Update the highlighted marker reference
+    highlightedMarker = marker;
+}
+
+
+    function startCountdown() {
+        setInterval(() => {
+            countdownTime--;
+            countdownElement.textContent = countdownTime;
+            if (countdownTime === 0) {
+                window.location.reload(); // Refresh the page when countdown reaches 0
+            }
+        }, 1000); // Update countdown every second
+    }
+
+
+    function initializeMap(lat = 0, lon = 0) {
+    // console.log("Initializing map at:", lat, lon);
+
+    if (!map) {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: lat, lng: lon },
+            zoom: 17
+        });
+        console.log("Map object:", map); // Log the map object
+
+        routePath = new google.maps.Polyline({
+            path: [],
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            icons: [{
+                icon: {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 3,
+                    strokeColor: '#0000FF'
+                },
+                offset: '100%'
+            }]
+        });
+        routePath.setMap(map);
+
+        infoWindow = new google.maps.InfoWindow();
+        mapInitialized = true;
+    } else {
+        map.setCenter({ lat: lat, lng: lon });
+        map.setZoom(17);
+    }
+}
+
+// Ensure map initialization in modal
+$('#mapModal').on('shown.bs.modal', () => {
+    let lastLat = parseFloat(localStorage.getItem('lastLat')) || 0;
+    let lastLon = parseFloat(localStorage.getItem('lastLon')) || 0;
+    
+        initializeMap(lastLat, lastLon); // Initialize map with default or last known coordinates
+ if (routeHistory.length === 0) {
+        // If no route history is present, prefetch from localStorage
+        routeHistory = JSON.parse(localStorage.getItem('routeHistory')) || [];
+
+        // Set the route path on the map
+        const path = routeHistory.map(point => point.position);
+        routePath.setPath(path);  // Draw the existing path
+   
+    if (selectedImei && lastLat && lastLon) {
+        updateMarker(selectedImei, lastLat, lastLon, null, null);  // Use last coordinates to update marker
+    }
+ }
+});
+
+
+
+        // smooth marker/icom movement
+function interpolatePosition(startLat, startLng, endLat, endLng, fraction) {
+    const lat = (endLat - startLat) * fraction + startLat;
+    const lng = (endLng - startLng) * fraction + startLng;
+    return new google.maps.LatLng(lat, lng);
+}
+
+
+function animateMarker(marker, startLat, startLng, endLat, endLng, duration) {
+    const startTime = performance.now();
+
+    function animateStep(time) {
+        const elapsed = time - startTime;
+        const fraction = Math.min(elapsed / duration, 1);
+        const newPosition = interpolatePosition(startLat, startLng, endLat, endLng, fraction);
+
+        marker.setPosition(newPosition);
+        if (fraction < 1) {
+            requestAnimationFrame(animateStep);
+        }
+    }
+    requestAnimationFrame(animateStep);
+}
+
+
+function updateMarker(imei, lat, lon, dir1, dir2, speed) {
+    if (!map) {
+        console.error("Map is not initialized. Unable to update marker.");
+        return;
+    }
+
+    console.log(`Updating marker for IMEI: ${imei}, Speed: ${speed}`); // Log the speed value here
+
+    const heading = calculateHeading(dir1, dir2);
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+
+    if (!isNaN(latitude) && !isNaN(longitude)) {
+        const latLng = new google.maps.LatLng(latitude, longitude);
+
+        if (markers[imei]) {
+            const oldPosition = markers[imei].getPosition();
+            animateMarker(
+                markers[imei],
+                oldPosition.lat(), oldPosition.lng(),
+                latitude, longitude,
+                10000 // Animation duration
+            );
+
+            // Check if speed is valid and update marker accordingly
+            if (speed && !isNaN(speed)) {
+                markers[imei].setIcon({
+                    url: 'http://64.227.135.38/car1.png',
+                    scaledSize: new google.maps.Size(38, 38),
+                    rotation: heading
+                });
+            }
+
+            markers[imei].setPosition(latLng);
+        } else {
+            markers[imei] = new google.maps.Marker({
+                position: latLng,
+                map: map,    
+                icon: {
+                    url: 'http://64.227.135.38/car1.png',
+                    scaledSize: new google.maps.Size(38, 38),
+                    rotation: heading
+                },
+                title: imei,
+            });
+
+            addMarkerClickListener(markers[imei], latLng, { imei, date: new Date(), time: new Date() }, { lat: latitude, lon: longitude }, speed);
+        }
+
+        highlightMarker(markers[imei]); 
+
+        map.panTo(latLng); // Center the map
+        updateRoute(latitude, longitude);
+    } else {
+        console.error("Invalid latitude or longitude values:", lat, lon);
+    }
+}
+
+
+
+
+
+function updateRoute(lat, lon) {
+    // Get the current timestamp
+    const now = new Date().getTime();
+    // Add the new point with its timestamp to the route history
+    routeHistory.push({ position: new google.maps.LatLng(lat, lon), timestamp: now });
+    // Remove points older than 30 minutes
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
+    routeHistory = routeHistory.filter(point => point.timestamp >= thirtyMinutesAgo);
+
+    localStorage.setItem('routeHistory', JSON.stringify(routeHistory));
+    // Update the routePath with the latest points
+    const path = routeHistory.map(point => point.position);
+    routePath.setPath(path);
+}
+
+        function calculateHeading(dir1, dir2) {
+            const direction = '${dir1}${dir2}';
+            switch (direction) {
+                case 'nn': return 0;   // North
+                case 'ne': return 45;  // Northeast
+                case 'ee': return 90;  // East
+                case 'se': return 135; // Southeast
+                case 'ss': return 180; // South
+                case 'sw': return 225; // Southwest
+                case 'ww': return 270; // West
+                case 'nw': return 315; // Northwest
+                default: return 0;     // Default
+            }
+        }
+        
+        function clearMarkers() {
+            Object.values(markers).forEach(marker => marker.setMap(null));
+            markers = {};
+        }
+        
+        function parseCoordinates(lat, lon) {
+            // Convert to 13.024585 and 77.370977
+            const parsedLat = parseFloat(lat.slice(0, 2)) + parseFloat(lat.slice(2)) / 60;
+            const parsedLon = parseFloat(lon.slice(0, 3)) + parseFloat(lon.slice(3)) / 60;
+            return { lat: parsedLat, lon: parsedLon };
+        }
+
+        function updateMapIfModalOpen(lat, lon, imei, dir1, dir2) {
+if ($('#mapModal').hasClass('show') && selectedImei === imei) {
+    updateMarker(imei, lat, lon, dir1, dir2); // Update the marker's position
+}
+}
+
+
+function addMarkerClickListener(marker, latLng, device, coords, speed) {
+    marker.addListener('click', function() {
+        console.log(`Marker clicked for IMEI: ${device.imei}, Speed: ${speed}`);
+
+        const content = `
+            <div class="info-window">
+                <strong>IMEI:</strong> ${device.imei}<br>
+                <strong>Lat:</strong> ${coords.lat.toFixed(6)}<br>
+                <strong>Lon:</strong> ${coords.lon.toFixed(6)}<br>
+                <strong>Last Update:</strong> ${formatDateTime(device.date, device.time).formattedDate} ${formatDateTime(device.date, device.time).formattedTime}<br>
+                <strong>Speed:</strong> ${speed ? speed + ' km/h' : 'N/A'}<br>
+            </div>`;
+
+        infoWindow.setContent(content);
+        infoWindow.setPosition(latLng);
+        infoWindow.open(map, marker);
+    });
+}
+
+
+
+
+
+
+// Function to perform reverse geocoding
+function geocodeLatLng(latlng, callback) {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: latlng }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            callback(results[0].formatted_address);  // Return the formatted address
+        } else {
+            callback('Location not available');  // If geocoding fails, return a default message
+        }
+    });
+}
+
+// Function to format date and time
+function formatDateTime(date, time) {
+    const formattedDate = new Date(date).toLocaleDateString();
+    const formattedTime = new Date(time).toLocaleTimeString();
+    return { formattedDate, formattedTime };
+}
+
+
+
+
+
+
+
+// async function fetchData(imei = '') {
+//     try {
+//         const url = `http://64.227.137.175:8001//api/data`;
+//         console.log("Fetching data from URL:", url);
+
+//         const response = await fetch(url);
+//         if (!response.ok) {
+//             throw new Error('Network response was not ok');
+//         }
+
+//         const data = await response.json();
+//         console.log("Received data:", data);
+
+//         const tableBody = document.getElementById('data-table-body');
+//         const errorMessage = document.getElementById('error-message');
+//         const notification = document.getElementById('notification');
+//         const alertSound = document.getElementById('alert-sound');
+
+//         if (!data || data.length === 0) {
+//             tableBody.innerHTML = '<tr><td colspan="99">No data available</td></tr>';
+//             return;
+//         }
+
+//         const fieldsToDisplay = [
+//             'imei', 'header', 'time', 'gps', 'latitude', 'dir1', 'longitude',
+//             'dir2', 'speed', 'course', 'date', 'checksum', 'ignition',
+//             'door', 'sos', 'r1', 'r2', 'ac', 'r3', 'main_power', 'harsh_speed', 'arm',
+//             'sleep', 'accelerometer', 'adc', 'one_wire', 'i_btn', 'odometer', 'temp', 'internal_bat',
+//             'gsm_sig', 'mcc', 'mnc', 'cellid'
+//         ];
+
+//         // Generate table headers if not already present
+//         const tableHeaderRow = document.getElementById('header-row');
+//         if (tableHeaderRow.children.length === 0) {
+//             const emptyTh = document.createElement('th');
+//             tableHeaderRow.appendChild(emptyTh);
+
+//             fieldsToDisplay.forEach(field => {
+//                 const th = document.createElement('th');
+//                 th.textContent = field.toUpperCase();
+//                 tableHeaderRow.appendChild(th);
+//             });
+
+//             const locationHeader = document.createElement('th');
+//             locationHeader.textContent = 'LOCATION';
+//             tableHeaderRow.appendChild(locationHeader);
+
+//             const alertHeader = document.createElement('th');
+//             alertHeader.textContent = 'ALERT';
+//             tableHeaderRow.appendChild(alertHeader);
+//         }
+//         const uniqueImeis = new Set();
+//         tableBody.innerHTML = '';
+
+//         let alertTriggered = false;
+//         let dataFound = false;
+//         let rowCount = 1; // Initialize row count
+
+//         data.forEach((item, index) => {
+//             // Parse numeric IMEI
+//             const numericImei = item.imei.replace(/[^\d]/g, '');
+//             const sos = item.sos || '0';  // Default to '0' if undefined
+
+//             // Skip if this IMEI has already been processed
+//             if (uniqueImeis.has(numericImei)) {
+//                 return; // Continue to the next item
+//             }
+//             uniqueImeis.add(numericImei); // Mark this IMEI as processed
+
+//             if (imei === '' || numericImei.includes(imei)) {
+//                 dataFound = true;
+
+//                 const { lat, lon } = parseCoordinates(item.latitude, item.longitude);
+//                 const row = tableBody.insertRow();
+//                 const rowNumCell = row.insertCell();
+//                 rowNumCell.textContent = rowCount++;
+
+//                 let speedInKilometers = null; // To store converted speed
+                
+//                 fieldsToDisplay.forEach(field => {
+//                     const cell = row.insertCell();
+                    
+//                     // Convert speed from miles to kilometers and display it
+//                     if (field === 'speed' && item[field]) {
+//                         const speedInMiles = parseFloat(item[field]);
+//                         speedInKilometers = (speedInMiles * 1.60934).toFixed(2); // Convert to km/h
+//                         cell.textContent = `${speedInKilometers} km/h`;
+
+//                         // Log the converted speed
+//                         console.log(`Converted Speed for IMEI: ${item.imei}: ${speedInKilometers} km/h`);
+//                     } else {
+//                         cell.textContent = item[field] || '';
+//                     }
+//                 });
+
+//                 // Log the final speed value before updating marker
+//                 console.log(`Final Speed Value before updating marker for IMEI: ${item.imei}: ${speedInKilometers}`);
+
+//                 // Outline the row in red if speed > 60 km/h
+//                 if (speedInKilometers !== null && parseFloat(speedInKilometers) > 60) {
+//                     row.style.outline = '3px solid red'; // Add red outline
+//                 }
+
+//                 // Location link
+//                 const locationCell = row.insertCell();
+//                 const locationLink = document.createElement('a');
+//                 locationLink.href = '#';
+
+//               // Add your custom image icon
+// const icon = document.createElement('img');
+// icon.src = 'http://64.227.135.38/location.png';  // Replace this with the correct path to your icon image
+// icon.style.width = '50px';
+// icon.style.height = '50px';// Adjust the width as needed
+
+//                 // locationLink.textContent = 'View Location';
+
+//               // Append the icon and the "View Location" text
+// locationLink.appendChild(icon);
+// //locationLink.appendChild(document.createTextNode(' View Location'));
+
+// locationCell.appendChild(locationLink);
+
+//                 locationLink.onclick = () => {
+//                     selectedImei = item.imei;
+//                     $('#mapModal').modal('show');
+
+//                     // Ensure the map is initialized after the modal is fully visible
+//                     $('#mapModal').on('shown.bs.modal', () => {
+//                         if (!map) {
+//                             const lat = parseFloat(localStorage.getItem('lastLat')) || 0; // Use lastLat if available
+//                             const lon = parseFloat(localStorage.getItem('lastLon')) || 0; // Use lastLon if available
+//                             initializeMap(lat, lon); // Initialize map with default or last known coordinates
+//                         }
+//                     });
+
+//                     clearMarkers();
+//                     routeHistory = [];
+//                     routePath.setPath([]);
+
+//                     if (!map) {
+//                         initializeMap(lat, lon);
+//                     }
+
+//                     // Log the speed value before passing to the updateMarker function
+//                     console.log(`Passing Speed Value to updateMarker for IMEI: ${item.imei}: ${speedInKilometers}`);
+
+//                     // Pass the speedInKilometers value to the updateMarker function
+//                     updateMarker(item.imei, lat, lon, item.dir1, item.dir2, speedInKilometers);
+
+//                     // Debugging log to check the state of previousStates[item.imei]
+//                     console.log("Previous state for IMEI:", item.imei, previousStates[item.imei]);
+
+//                     // Ensure previousStates[item.imei] is initialized as an object
+//                     if (!previousStates[item.imei]) {
+//                         previousStates[item.imei] = {}; // Initialize as an empty object
+//                         console.log("Initialized previousStates for IMEI:", item.imei);
+//                     }
+
+//                     // Remove the red background when the location is viewed
+//                     row.style.backgroundColor = ''; // Reset background color
+//                     previousStates[item.imei].sosAcknowledged = true; // Mark SOS as acknowledged
+
+//                     // Log the updated state to verify assignment
+//                     console.log("Updated previousStates for IMEI:", item.imei, previousStates[item.imei]);
+//                 };
+//                 locationCell.appendChild(locationLink);
+
+//                 // Alert icon handling
+//                 const alertCell = row.insertCell();
+//                 const alertIcon = document.createElement('i');
+//                 alertIcon.classList.add('fas', 'fa-exclamation-triangle');
+                
+//                 // Handle SOS and row highlighting
+//                 if (item.sos === '1') {
+//                     alertIcon.style.color = 'red';
+//                     alertTriggered = true;
+                    
+//                     // Check if this SOS has not been acknowledged by viewing the location
+//                     const previousState = previousStates[item.imei] || { sos: '0', sosAcknowledged: false };
+                    
+//                     // If SOS is triggered and not acknowledged, mark the row as red
+//                     if (!previousState.sosAcknowledged) {
+//                         row.style.backgroundColor = 'red';  // Highlight row in red
+//                     }
+
+//                     // Update the SOS state in previousStates
+//                     previousStates[item.imei] = { sos: item.sos, sosAcknowledged: previousState.sosAcknowledged };
+//                 } else {
+//                     alertIcon.style.color = 'gray';
+//                 }
+//                 alertCell.appendChild(alertIcon);
+
+//                 updateMapIfModalOpen(lat, lon, item.imei, item.dir1, item.dir2);
+//             }
+//         });
+
+//         if (!dataFound) {
+//             tableBody.innerHTML = '<tr><td colspan="99">No matching data found</td></tr>';
+//         }
+
+//         if (alertTriggered) {
+//             notification.textContent = "SOS alert triggered!";
+//             notification.style.display = 'block';
+//             triggerSOSAlert(notification, alertSound);
+//             alertSound.play().catch(error => {
+//                 console.error("Audio playback failed:", error);
+//             });
+//         } else {
+//             notification.style.display = 'none';
+//         }
+
+//         errorMessage.style.display = 'none';
+//     } catch (error) {
+//         console.error('Error fetching data:', error);
+//         document.getElementById('error-message').style.display = 'block';
+//     }
+// }
+
+
+
+async function fetchData(imei = '') {
+    try {
+        const url = `http://64.227.137.175:8001/api/data`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        const data = await response.json();
+        const tableBody = document.getElementById('data-table-body');
+        const processedImeis = new Set(); // Track unique IMEIs
+
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="99">No data available</td></tr>';
+            return;
+        }
+
+        const fieldsToDisplay = [
+            'imei', 'header', 'time', 'gps', 'latitude', 'dir1', 'longitude',
+            'dir2', 'speed', 'course', 'date', 'checksum', 'ignition',
+            'door', 'sos', 'r1', 'r2', 'ac', 'r3', 'main_power', 'harsh_speed', 'arm',
+            'sleep', 'accelerometer', 'adc', 'one_wire', 'i_btn', 'odometer', 'temp', 'internal_bat',
+            'gsm_sig', 'mcc', 'mnc', 'cellid'
+        ];
+
+        let alertTriggered = false;
+
+        data.forEach((item, index) => {
+            const numericImei = item.imei.replace(/[^\d]/g, ''); // Parse IMEI
+
+            if (!processedImeis.has(numericImei)) { // Ensure unique IMEIs
+                processedImeis.add(numericImei); // Mark IMEI as processed
+
+                const row = tableBody.insertRow();
+                const rowNumCell = row.insertCell();
+                rowNumCell.textContent = index + 1;
+
+                fieldsToDisplay.forEach(field => {
+                    const cell = row.insertCell();
+                    if (field === 'speed' && item[field]) {
+                        const speedInMiles = parseFloat(item[field]);
+                        const speedInKilometers = (speedInMiles * 1.60934).toFixed(2);
+                        cell.textContent = `${speedInKilometers} km/h`;
+                        // Highlight if speed exceeds 60 km/h
+                        if (parseFloat(speedInKilometers) > 60) {
+                            row.style.outline = '3px solid red';
+                        }
+                    } else {
+                        cell.textContent = item[field] || '';
+                    }
+                });
+
+                // Add location link
+                const locationCell = row.insertCell();
+                const locationLink = document.createElement('a');
+                const icon = document.createElement('img');
+                icon.src = 'http://64.227.135.38/location.png';
+                icon.style.width = '50px';
+                icon.style.height = '50px';
+                locationLink.appendChild(icon);
+                locationCell.appendChild(locationLink);
+
+                locationLink.onclick = () => {
+                    const { lat, lon } = parseCoordinates(item.latitude, item.longitude);
+                    selectedImei = item.imei;
+                    $('#mapModal').modal('show');
+                    clearMarkers();
+                    routeHistory = [];
+                    routePath.setPath([]);
+                    initializeMap(lat, lon);
+                    updateMarker(item.imei, lat, lon, item.dir1, item.dir2, null);
+                };
+
+                // Add alert icon
+                const alertCell = row.insertCell();
+                const alertIcon = document.createElement('i');
+                alertIcon.classList.add('fas', 'fa-exclamation-triangle');
+                alertIcon.style.color = item.sos === '1' ? 'red' : 'gray';
+                alertCell.appendChild(alertIcon);
+
+                // Handle SOS highlighting
+                if (item.sos === '1') {
+                    row.style.backgroundColor = 'red';
+                    alertTriggered = true;
+                }
+            }
+        });
+
+        // Display alert notification
+        const notification = document.getElementById('notification');
+        if (alertTriggered) {
+            notification.textContent = "SOS alert triggered!";
+            notification.style.display = 'block';
+            const alertSound = document.getElementById('alert-sound');
+            alertSound.play().catch(error => {
+                console.error("Audio playback failed:", error);
+            });
+        } else {
+            notification.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        document.getElementById('error-message').style.display = 'block';
+    }
+}
+
+
+
+
+// Handle the back button click to reset the search
+document.getElementById('back-button').addEventListener('click', function () {
+            document.getElementById('search-input').value = '';
+            isSearching = false;
+            this.style.display = 'none';
+            localStorage.removeItem(searchKey);
+            fetchData();
+        });
+
+        // Store and restore the search IMEI in localStorage
+        function storeSearchImei(imeis) {
+            localStorage.setItem(searchKey, imeis.join(','));
+        }
+
+        function restoreSearchImeis() {
+            const storedImeis = localStorage.getItem(searchKey);
+            if (storedImeis) {
+                const imeiArray = storedImeis.split(',').map(imei => imei.trim());
+                document.getElementById('search-input').value = imeiArray.join(', ');
+                $('#back-button').show();
+                isSearching = true;
+                fetchData(imeiArray);
+            } else {
+                fetchData();
+            }
+        }
+// Function to trigger SOS alert
+function triggerSOSAlert(notification, alertSound) {
+    notification.textContent = "SOS alert triggered!";
+    notification.style.display = 'block';
+    alertSound.play().catch(error => {
+        console.error("Audio playback failed:", error);
+    });
+
+    // Position notification at the top center of the page
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.left = '50%';
+    notification.style.transform = 'translateX(-50%)';
+    notification.style.zIndex = '1000';
+
+    // Automatically hide the notification after a few seconds
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 4000);
+}
+
+// Handle the back button click to reset the search
+document.getElementById('back-button').addEventListener('click', function () {
+    document.getElementById('search-input').value = '';
+    isSearching = false;
+    this.style.display = 'none';
+    localStorage.removeItem(searchKey);
+    fetchData();
+});
+
+// Function to fetch data for one or more IMEIs
+function fetchData(imeis = []) {
+    if (Array.isArray(imeis) && imeis.length > 0) {
+        imeis.forEach(imei => {
+            // Perform your data fetching logic here for each IMEI
+            console.log("Fetching data for IMEI: ", imei);
+            // Add your AJAX/fetch call here
+        });
+    } else {
+        // Fetch all data if no IMEI is provided
+        console.log("Fetching data for all entries");
+        // Add your AJAX/fetch call here
+    }
+}
+
+
+
+$(document).ready(() => {
+    restoreSearchImeis();  // Restore search state on page load
+    startCountdown(); // Start the countdown on page load
+    
+// Check if the modal was open before reload
+const modalOpen = localStorage.getItem('modalOpen');
+const lastSelectedImei = localStorage.getItem('selectedImei');
+
+if (modalOpen === 'true' && lastSelectedImei) {
+    // Reopen the modal and restore the map with the last selected IMEI
+    selectedImei = lastSelectedImei;
+    $('#mapModal').modal('show');
+    // Assuming last coordinates are stored
+    const lastLat = parseFloat(localStorage.getItem('lastLat'));
+    const lastLon = parseFloat(localStorage.getItem('lastLon'));
+
+    if (!isNaN(lastLat) && !isNaN(lastLon)) {
+        if (!map) {
+            initializeMap(lastLat, lastLon);
+        }
+        updateMarker(selectedImei, lastLat, lastLon, null, null); // You can replace null with actual dir1, dir2 if needed
+    }
+}
+fetchData(); // Initial fetch for table population
+
+$('#mapModal').on('shown.bs.modal', () => {
+    if (!map) {
+        initializeMap(defaultLat, defaultLon); // Initialize map with default coordinates
+    }
+    // Save the state when modal is opened
+    localStorage.setItem('modalOpen', 'true');
+});
+$('#mapModal').on('hidden.bs.modal', () => {
+    selectedImei = null; // Reset selected IMEI when modal is closed
+    clearMarkers(); // Clear markers when modal is closed
+    // Clear modal state when modal is closed
+    localStorage.setItem('modalOpen', 'false');
+    localStorage.removeItem('selectedImei');
+    localStorage.removeItem('lastLat');
+    localStorage.removeItem('lastLon');
+});
+setInterval(() => {
+    if (selectedImei) {
+        fetchData(selectedImei); // Fetch and update data for the selected IMEI
+    } else {
+        fetchData(); // Regular fetch for the table
+    }
+}, 10000);
+setInterval(() => {
+    // Before reloading, save the modal state and the selected IMEI
+    if ($('#mapModal').hasClass('show') && selectedImei) {
+        localStorage.setItem('modalOpen', 'true');
+        localStorage.setItem('selectedImei', selectedImei);
+
+        // Store the last known coordinates
+        const lastPoint = routeHistory[routeHistory.length - 1].position;
+        localStorage.setItem('lastLat', lastPoint.lat());
+        localStorage.setItem('lastLon', lastPoint.lng());
+    } else {
+        localStorage.setItem('modalOpen', 'false');
+    }
+
+    window.location.reload(); // Reload the entire page every 30 seconds
+}, 30000);
+setInterval(() => {
+            const storedImeis = localStorage.getItem(searchKey);
+            const imeiArray = storedImeis ? storedImeis.split(',').map(imei => imei.trim()) : [];
+            fetchData(imeiArray);  // Use stored IMEI or fetch full data
+        }, 10000);  // Refresh every 10 seconds
+
+
+        // Search input handling
+        $('#search-input').on('input', function () {
+            const searchValue = $(this).val().trim();
+            if (searchValue !== '') {
+                isSearching = true;
+                $('#back-button').show();
+                const imeiArray = searchValue.split(',').map(imei => imei.trim());
+                storeSearchImeis(imeiArray);  // Store search IMEI
+                fetchData(imeiArray);
+            } else {  
+                isSearching = false;
+                $('#back-button').hide();
+                localStorage.removeItem(searchKey);  // Clear stored search IMEI
+                fetchData();
+            }
+        });
+        $('#mapModal').on('hidden.bs.modal', () => {
+            selectedImei = null;  // Reset IMEI when the modal is closed
+            map = null;  // Clear the map when modal is closed
+        });
+    });
+    </script>
+  </body>
+</html>
+
+

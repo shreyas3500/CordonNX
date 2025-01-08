@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPS Vehicle Inventory</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      h1 {
+        color: #ffffff;
+        margin-bottom: 20px;
+      }
+
+      .flash-box {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .flash-success {
+        background-color: #38b000;
+        color: #ffffff;
+      }
+
+      .flash-danger {
+        background-color: #e63946;
+        color: #ffffff;
+      }
+
+      input[type="text"],
+      input[type="date"],
+      input[type="file"] {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: white;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        color: black;
+        border: 1px solid #ccc;
+        text-align: left;
+      }
+
+      th {
+        background-color: #e2e8f0;
+        color: #333;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f4f4f4;
+      }
+
+      tr:hover {
+        background-color: #e2e8f0;
+      }
+
+      .btn {
+        padding: 10px 15px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .btn:hover {
+        background-color: #0056b3;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .error {
+        color: red;
+        font-size: 0.9em;
+        margin-top: -15px;
+        margin-bottom: 15px;
+      }
+
+      .success {
+        background-color: #28a745;
+      }
+
+      .danger {
+        background-color: #dc3545;
+      }
+
+      #manualEntryForm,
+      #uploadBox {
+        background-color: white;
+        padding: 20px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: #333;
+      }
+
+      .status-btn {
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: white;
+        cursor: default;
+      }
+
+      .status-active {
+        background-color: #28a745;
+      }
+
+      .status-inactive {
+        background-color: #dc3545;
+      }
+
+      .error-box {
+        padding: 10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .preloader {
+        display: none;
+        border: 6px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 6px solid #3498db;
+        width: 30px;
+        height: 30px;
+        animation: spin 2s linear infinite;
+        margin: 10px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      /* Edit/Delete button styles */
+      .action-btn {
+        padding: 5px 10px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+
+      .action-btn.edit {
+        background-color: #28a745;
+      }
+
+      .action-btn.delete {
+        background-color: #dc3545;
+      }
+
+      .action-btn:hover {
+        opacity: 0.8;
+      }
+      .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .edit-icon {
+        color: #007bff;
+      }
+
+      .delete-icon {
+        color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Admin</h4>
+        </div>
+        <hr
+          class="divider"
+          style="
+            height: 2px;
+            border-width: 0;
+            color: gray;
+            background-color: gray;
+          "
+        />
+        <ul class="menu">
+          <li class="menu-item">
+            <a href="https://cordonnx.com/admin/dashboard" id="dashboard-btn"
+              >Dashboard</a
+            >
+          </li>
+          <li class="menu-header">Maps</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8002/" id="livemap-btn"
+              >Live Map - All Vehicles</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8001/" id="singleVehicle-btn"
+              >Live Map - Single Vehicle</a
+            >
+          </li>
+          <li class="menu-header">Inventory</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8003/" id="inventory-btn"
+              >Device Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8004/" id="typography-btn"
+              >Sim Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8005/" id="typography-btn"
+              >Employee List</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8007/" id="base-btn">Company List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8006/" id="buttons-btn"
+              >Vehicle List</a
+            >
+          </li>
+          <li class="menu-item active">
+            <a href="http://64.227.137.175:8011/" id="buttons-btn"
+              >Driver List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Charts</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="icons-btn">Icons</a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.137.175:8010/">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="http://64.227.137.175:8011/">Driver list</a></li>
+            <!-- <li>/</li>
+            <li><a href="#">Settings</a></li> -->
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img src="profile-placeholder.png" alt="Profile Picture" />
+            </div>
+          </div>
+        </header>
+        <hr
+          class="divider"
+          style="
+            height: 2px;
+            border-width: 0;
+            color: gray;
+            background-color: gray;
+          "
+        />
+        <section class="dashboard">
+          <h1>Driver Management</h1>
+
+          <!-- Manual Driver Entry Form -->
+          <button id="manualEntryBtn" class="btn success mb-4">
+            Add New Driver
+          </button>
+
+          <div id="manualEntryForm" class="hidden">
+            <form action="/manual_driver_entry" method="POST">
+              <div class="mb-4">
+                <label for="DriverID">Driver ID</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="DriverID"
+                  id="DriverID"
+                  required
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="DriverName">Driver Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="DriverName"
+                  id="DriverName"
+                  required
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="LicenseNumber">License Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="LicenseNumber"
+                  id="LicenseNumber"
+                  required
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="PhoneNumber">Phone Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="PhoneNumber"
+                  id="PhoneNumber"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="Address">Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="Address"
+                  id="Address"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="DateOfHire">Date of Hire</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="DateOfHire"
+                  id="DateOfHire"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="DateOfBirth">Date of Birth</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="DateOfBirth"
+                  id="DateOfBirth"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="EmergencyContact">Emergency Contact</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="EmergencyContact"
+                  id="EmergencyContact"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="EmergencyPhone">Emergency Phone</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="EmergencyPhone"
+                  id="EmergencyPhone"
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="LicensePlateNumber">License Plate Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="LicensePlateNumber"
+                  id="LicensePlateNumber"
+                  required
+                />
+              </div>
+
+              <div class="mb-4">
+                <label for="CurrentStatus">Current Status</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="CurrentStatus"
+                  id="CurrentStatus"
+                />
+              </div>
+
+              <button type="submit" class="btn success">Submit</button>
+              <button type="button" id="cancelBtn" class="btn danger">
+                Cancel
+              </button>
+            </form>
+          </div>
+
+          <!-- Upload Driver Form -->
+          <button id="uploadBtn" class="btn mb-4">Upload</button>
+
+          <!-- Hidden Upload Form Container -->
+          <div id="uploadFormContainer" class="hidden">
+            <form
+              id="uploadForm"
+              action="/upload_driver"
+              method="post"
+              enctype="multipart/form-data"
+            >
+              <input type="file" name="file" accept=".xls,.xlsx" required />
+              <button type="submit" class="btn">Upload Excel</button>
+              <a href="/download_driver_template" class="btn"
+                >Download Template</a
+              >
+              <div class="preloader" style="display: none"></div>
+              <!-- Initially hidden -->
+            </form>
+          </div>
+
+          <div id="errorBox" class="error-box hidden"></div>
+
+          <!-- Flash messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="flash-box flash-{{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+
+          <table>
+            <thead>
+              <tr>
+                <th>Driver ID</th>
+                <th>Driver Name</th>
+                <th>License Number</th>
+                <th>Phone Number</th>
+                <th>Address</th>
+                <th>Date of Hire</th>
+                <th>Date of Birth</th>
+                <th>Emergency Contact</th>
+                <th>Emergency Phone</th>
+                <th>License Plate Number</th>
+                <th>Current Status</th>
+              </tr>
+            </thead>
+            <tbody id="driverTable">
+              {% for driver in drivers %}
+              <tr>
+                <td>{{ driver['Driver ID'] }}</td>
+                <td>{{ driver['Driver Name'] }}</td>
+                <td>{{ driver['License Number'] }}</td>
+                <td>{{ driver['Phone Number'] }}</td>
+                <td>{{ driver['Address'] }}</td>
+                <td>{{ driver['Date of Hire'] }}</td>
+                <td>{{ driver['Date of Birth'] }}</td>
+                <td>{{ driver['Emergency Contact'] }}</td>
+                <td>{{ driver['Emergency Phone'] }}</td>
+                <td>{{ driver['License Plate Number'] }}</td>
+                <td>{{ driver['Current Status'] }}</td>
+                <td>
+                  <button class="icon-btn edit-icon">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="icon-btn delete-icon">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+      document
+        .getElementById("manualEntryBtn")
+        .addEventListener("click", function () {
+          // Show the manual entry form for drivers
+          document.getElementById("manualEntryForm").classList.remove("hidden");
+          document.getElementById("DriverID").focus(); // Assuming the first input in the manual entry form is DriverID
+        });
+
+      document
+        .getElementById("cancelBtn")
+        .addEventListener("click", function () {
+          // Hide the manual entry form
+          document.getElementById("manualEntryForm").classList.add("hidden");
+        });
+
+      document
+        .getElementById("uploadBtn")
+        .addEventListener("click", function () {
+          // Toggle visibility of the upload form
+          document
+            .getElementById("uploadFormContainer")
+            .classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (event) {
+          var fileInput = document.getElementById("file"); // Assuming the file input has id="file"
+          if (!fileInput.files.length) {
+            alert("Please select a file to upload.");
+            event.preventDefault(); // Prevent form submission
+          } else {
+            document.querySelector(".preloader").style.display = "block"; // Show preloader during upload
+          }
+        });
+    </script>
+  </body>
+</html>

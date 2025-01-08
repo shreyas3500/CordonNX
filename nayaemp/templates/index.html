@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPS Employee Inventory</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      h1 {
+        color: #ffffff;
+        margin-bottom: 20px;
+      }
+
+      .flash-box {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .flash-success {
+        background-color: #38b000;
+        color: #ffffff;
+      }
+
+      .flash-danger {
+        background-color: #e63946;
+        color: #ffffff;
+      }
+
+      input[type="text"],
+      input[type="date"],
+      input[type="file"] {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: white;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        color: black;
+        border: 1px solid #ccc;
+        text-align: left;
+      }
+
+      th {
+        background-color: #e2e8f0;
+        color: #333;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f4f4f4;
+      }
+
+      tr:hover {
+        background-color: #e2e8f0;
+      }
+
+      .btn {
+        padding: 10px 15px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .btn:hover {
+        background-color: #0056b3;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .error {
+        color: red;
+        font-size: 0.9em;
+        margin-top: -15px;
+        margin-bottom: 15px;
+      }
+
+      .success {
+        background-color: #28a745;
+      }
+
+      .danger {
+        background-color: #dc3545;
+      }
+
+      #manualEntryForm,
+      #uploadBox {
+        background-color: white;
+        padding: 20px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: #333;
+      }
+
+      .status-btn {
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: white;
+        cursor: default;
+      }
+
+      .status-active {
+        background-color: #28a745;
+      }
+
+      .status-inactive {
+        background-color: #dc3545;
+      }
+
+      .error-box {
+        padding: 10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .preloader {
+        display: none;
+        border: 6px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 6px solid #3498db;
+        width: 30px;
+        height: 30px;
+        animation: spin 2s linear infinite;
+        margin: 10px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      /* Edit/Delete button styles */
+      .action-btn {
+        padding: 5px 10px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+
+      .action-btn.edit {
+        background-color: #28a745;
+      }
+
+      .action-btn.delete {
+        background-color: #dc3545;
+      }
+
+      .action-btn:hover {
+        opacity: 0.8;
+      }
+      .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .edit-icon {
+        color: #007bff;
+      }
+
+      .delete-icon {
+        color: #dc3545;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>Cordon</h1>
+          <h4>Admin</h4>
+        </div>
+        <hr
+          class="divider"
+          style="
+            height: 2px;
+            border-width: 0;
+            color: gray;
+            background-color: gray;
+          "
+        />
+        <ul class="menu">
+          <li class="menu-item">
+            <a href="https://cordonnx.com/admin/dashboard" id="dashboard-btn">Dashboard</a>
+          </li>
+          <li class="menu-header">Maps</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8002/" id="livemap-btn">Live Map - All Vehicles</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8001/" id="singleVehicle-btn">Live Map - Single Vehicle</a>
+          </li>
+          <li class="menu-header">Inventory</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8003/" id="inventory-btn"
+              >Device Inventory</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8004/" id="typography-btn"
+              >Sim Inventory</a
+            >
+          </li>
+          <li class="menu-item active">
+            <a href="http://64.227.137.175:8005/" id="typography-btn"
+              >Employee List</a
+            >
+          </li>
+          <li class="menu-header">Components</li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8007/" id="base-btn">Company List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8006/" id="buttons-btn">Vehicle List</a>
+          </li>
+          <li class="menu-item">
+            <a href="http://64.227.137.175:8011/" id="buttons-btn"
+              >Driver List</a
+            >
+          </li>
+          <li class="menu-item">
+            <a href="#" id="charts-btn">Charts</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="forms-btn">Forms</a>
+          </li>
+          <li class="menu-item">
+            <a href="#" id="icons-btn">Icons</a>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <header class="navbar">
+          <ul class="breadcrumb">
+            <li>
+              <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+                <i class="fa fa-bars"></i>
+              </a>
+            </li>
+            <li><a href="http://64.227.137.175:8010/">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="http://64.227.137.175:8005/">Employee list</a></li>
+            <!-- <li>/</li>
+            <li><a href="#">Settings</a></li> -->
+          </ul>
+          <div class="profile-area">
+            <span class="icon">🔔</span>
+            <span class="icon">📧</span>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="profile">
+              <img src="profile-placeholder.png" alt="Profile Picture" />
+            </div>
+          </div>
+        </header>
+        <hr
+          class="divider"
+          style="
+            height: 2px;
+            border-width: 0;
+            color: gray;
+            background-color: gray;
+          "
+        />
+        <section class="dashboard">
+          <div>
+            <h1>Employee Inventory</h1>
+
+            <button id="manualEntryBtn" class="btn success mb-4">
+              Add New Employee
+            </button>
+
+            <div id="manualEntryForm" class="hidden">
+              <form id="manualForm" action="/manual_entry" method="post">
+                <div class="mb-4">
+                  <label for="EmployeeID">Employee ID</label>
+                  <input
+                    type="text"
+                    name="EmployeeID"
+                    id="EmployeeID"
+                    required
+                  />
+                </div>
+                <div class="mb-4">
+                  <label for="FirstName">First Name</label>
+                  <input type="text" name="FirstName" id="FirstName" required />
+                </div>
+                <div class="mb-4">
+                  <label for="LastName">Last Name</label>
+                  <input type="text" name="LastName" id="LastName" required />
+                </div>
+                <div class="mb-4">
+                  <label for="DateOfBirth">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="DateOfBirth"
+                    id="DateOfBirth"
+                    required
+                  />
+                </div>
+                <div class="mb-4">
+                  <label for="DateOfJoining">Date of Joining</label>
+                  <input
+                    type="date"
+                    name="DateOfJoining"
+                    id="DateOfJoining"
+                    required
+                  />
+                </div>
+                <div class="mb-4">
+                  <label for="Position">Position</label>
+                  <input type="text" name="Position" id="Position" required />
+                </div>
+                <div class="mb-4">
+                  <label for="Department">Department</label>
+                  <input
+                    type="text"
+                    name="Department"
+                    id="Department"
+                    required
+                  />
+                </div>
+                <div class="mb-4">
+                  <label for="Email">Email</label>
+                  <input type="email" name="Email" id="Email" required />
+                </div>
+                <div class="mb-4">
+                  <label for="PhoneNumber">Phone Number</label>
+                  <input
+                    type="text"
+                    name="PhoneNumber"
+                    id="PhoneNumber"
+                    required
+                  />
+                </div>
+                <div class="mb-4">
+                  <label for="Address">Address</label>
+                  <input type="text" name="Address" id="Address" />
+                </div>
+                <button type="submit" class="btn success">Submit</button>
+                <button type="button" id="cancelBtn" class="btn danger">
+                  Cancel
+                </button>
+              </form>
+            </div>
+
+            <!-- Upload Button -->
+            <button id="uploadBtn" class="btn mb-4">Upload</button>
+
+            <!-- Hidden Upload Form Container -->
+            <div id="uploadFormContainer" class="hidden">
+              <form
+                id="uploadForm"
+                action="/upload"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <input type="file" name="file" accept=".xls,.xlsx" required />
+                <button type="submit" class="btn">Upload Excel</button>
+                <a href="/download_template" class="btn">Download Template</a>
+                <div class="preloader"></div>
+              </form>
+            </div>
+
+            <div id="errorBox" class="error-box hidden"></div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %} {%
+            if messages %} {% for category, message in messages %}
+            <div class="flash-box flash-{{ category }}">{{ message }}</div>
+            {% endfor %} {% endif %} {% endwith %}
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                  <th>Date of Birth</th>
+                  <th>Date of Joining</th>
+                  <th>Position</th>
+                  <th>Department</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Address</th>
+                </tr>
+              </thead>
+              <tbody id="employeeTable">
+                {% for employee in employees %}
+                <tr>
+                  <td>{{ employee.EmployeeID }}</td>
+                  <td>{{ employee.FirstName }}</td>
+                  <td>{{ employee.LastName }}</td>
+                  <td>{{ employee.DateOfBirth }}</td>
+                  <td>{{ employee.DateOfJoining }}</td>
+                  <td>{{ employee.Position }}</td>
+                  <td>{{ employee.Department }}</td>
+                  <td>{{ employee.Email }}</td>
+                  <td>{{ employee.PhoneNumber }}</td>
+                  <td>{{ employee.Address }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+      document
+        .getElementById("manualEntryBtn")
+        .addEventListener("click", function () {
+          document.getElementById("manualEntryForm").classList.remove("hidden");
+          document.getElementById("EmployeeID").focus();
+        });
+
+      document
+        .getElementById("cancelBtn")
+        .addEventListener("click", function () {
+          document.getElementById("manualEntryForm").classList.add("hidden");
+        });
+
+      document
+        .getElementById("uploadBtn")
+        .addEventListener("click", function () {
+          document
+            .getElementById("uploadFormContainer")
+            .classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function () {
+          document.querySelector(".preloader").style.display = "block";
+        });
+
+      document
+        .getElementById("manualForm")
+        .addEventListener("submit", function (event) {
+          var employeeID = document.getElementById("EmployeeID").value;
+          var firstName = document.getElementById("FirstName").value;
+          var lastName = document.getElementById("LastName").value;
+          var email = document.getElementById("Email").value;
+          var phoneNumber = document.getElementById("PhoneNumber").value;
+
+          var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          var phonePattern = /^[0-9]{10}$/;
+
+          var errors = false;
+
+          if (!emailPattern.test(email)) {
+            document.getElementById("emailError").classList.remove("hidden");
+            errors = true;
+          } else {
+            document.getElementById("emailError").classList.add("hidden");
+          }
+
+          if (!phonePattern.test(phoneNumber)) {
+            document.getElementById("phoneError").classList.remove("hidden");
+            errors = true;
+          } else {
+            document.getElementById("phoneError").classList.add("hidden");
+          }
+
+          if (errors) {
+            event.preventDefault();
+          }
+        });
+    </script>
+  </body>
+</html>

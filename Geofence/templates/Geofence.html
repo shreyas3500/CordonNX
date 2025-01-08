@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geofence Creator</title>
+    <style>
+        #map { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .popup {
+            display: none;
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translate(0, -50%);
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .popup.active {
+            display: block;
+        }
+        
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+        
+        #vehicleList {
+            margin-top: 10px;
+        }
+        
+        #vehicleList li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="controls">
+        <input type="radio" id="city" name="geofenceType" value="city">
+        <label for="city">City</label>
+        <input type="radio" id="area" name="geofenceType" value="area" checked>
+        <label for="area">Area</label>
+        <button id="save">Save Geofence</button>
+        <button id="delete" style="display: none;">Delete Geofence</button>
+    </div>
+    <div id="vehiclePopup" class="popup">
+        <span class="close">&times;</span>
+        <h2>Add Vehicle</h2>
+        <form id="vehicleForm">
+            <label for="searchVehicle">Search Vehicle:</label><br>
+            <input type="text" id="searchVehicle" name="searchVehicle" onkeyup="filterVehicles()"><br><br>
+            <label for="vehicleDropdown">Select Vehicle:</label><br>
+            <select id="vehicleDropdown" name="vehicleDropdown">
+            </select><br><br>
+            <label for="newVehicle">Add New Vehicle:</label><br>
+            <input type="text" id="newVehicle" name="newVehicle"><br><br>
+            <button type="button" id="addNewVehicleButton">Add New Vehicle</button><br><br>
+            <button type="submit">Add Vehicle</button>
+        </form>
+        <ul id="vehicleList"></ul>
+    </div>
+    <script>
+        var map;
+        var defaultZoomLevel = 6;
+        var defaultCenter = { lat: 12.9716, lng: 77.5946 };
+        var selectedShape;
+        var vehicles = [];
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: defaultCenter,
+                zoom: defaultZoomLevel
+            });
+
+            var drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: ['polygon', 'rectangle', 'circle']
+                },
+                polygonOptions: {
+                    editable: true,
+                    draggable: true
+                },
+                rectangleOptions: {
+                    editable: true,
+                    draggable: true
+                },
+                circleOptions: {
+                    editable: true,
+                    draggable: true
+                }
+            });
+            drawingManager.setMap(map);
+
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
+                if (selectedShape) {
+                    selectedShape.setMap(null);
+                }
+                selectedShape = event.overlay;
+                selectedShape.type = event.type;
+
+                document.getElementById('delete').style.display = 'inline';
+
+                google.maps.event.addListener(selectedShape, 'click', function() {
+                    setSelection(selectedShape);
+                });
+
+                setSelection(selectedShape);
+
+                document.getElementById('vehiclePopup').classList.add('active');
+                loadVehicles();
+            });
+
+            function setSelection(shape) {
+                if (selectedShape) {
+                    selectedShape.setEditable(false);
+                }
+                selectedShape = shape;
+                selectedShape.setEditable(true);
+            }
+
+            document.getElementById('save').addEventListener('click', function() {
+    if (selectedShape) {
+        var geofenceType = document.querySelector('input[name="geofenceType"]:checked').value;
+        var shapeData;
+
+        if (selectedShape.type === google.maps.drawing.OverlayType.RECTANGLE) {
+            var bounds = selectedShape.getBounds();
+            shapeData = {
+                type: geofenceType,
+                shape: 'rectangle',
+                bounds: {
+                    north: bounds.getNorthEast().lat(),
+                    south: bounds.getSouthWest().lat(),
+                    east: bounds.getNorthEast().lng(),
+                    west: bounds.getSouthWest().lng()
+                },
+                vehicles: vehicles
+            };
+        } else if (selectedShape.type === google.maps.drawing.OverlayType.CIRCLE) {
+            shapeData = {
+                type: geofenceType,
+                shape: 'circle',
+                path: [
+                    { lat: selectedShape.getCenter().lat(), lng: selectedShape.getCenter().lng() },
+                    { lat: selectedShape.getRadius(), lng: 0 }
+                ],
+                vehicles: vehicles
+            };
+        } else {
+            shapeData = {
+                type: geofenceType,
+                shape: selectedShape.type,
+                path: selectedShape.getPath().getArray().map(coord => ({ lat: coord.lat(), lng: coord.lng() })),
+                vehicles: vehicles
+            };
+        }
+
+        fetch('/save_geofence', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(shapeData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Geofence saved with ID: ' + data.geofence_id);
+            displayGeofence(shapeData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        alert('Please draw a geofence first.');
+    }
+});
+
+
+            document.getElementById('delete').addEventListener('click', function() {
+                if (selectedShape) {
+                    selectedShape.setMap(null);
+                    alert('Geofence deleted');
+                    document.getElementById('delete').style.display = 'none';
+                    selectedShape = null;
+                } else {
+                    alert('Please select a geofence first.');
+                }
+            });
+
+            document.querySelector('.close').addEventListener('click', function() {
+                document.getElementById('vehiclePopup').classList.remove('active');
+            });
+
+            document.querySelectorAll('input[name="geofenceType"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'city') {
+                        map.setZoom(10);
+                    } else {
+                        map.setZoom(defaultZoomLevel);
+                        map.setCenter(defaultCenter);
+                    }
+                });
+            });
+
+            document.getElementById('vehicleForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                addVehicle();
+            });
+
+            document.getElementById('addNewVehicleButton').addEventListener('click', function() {
+    var newVehicleInput = document.getElementById('newVehicle');
+    var newVehicleName = newVehicleInput.value.trim();
+    
+    if (newVehicleName) {
+        var vehicleData = { name: newVehicleName };
+
+        fetch('/add_vehicle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(vehicleData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.vehicle_id) {
+                var vehicleDropdown = document.getElementById('vehicleDropdown');
+                var option = document.createElement('option');
+                option.value = data.vehicle_id;
+                option.textContent = newVehicleName;
+                vehicleDropdown.appendChild(option);
+
+                vehicleDropdown.value = data.vehicle_id;
+
+                newVehicleInput.value = '';
+
+                vehicles.push({ id: data.vehicle_id, name: newVehicleName });
+
+                var vehicleList = document.getElementById('vehicleList');
+                var listItem = document.createElement('li');
+                listItem.textContent = newVehicleName;
+                vehicleList.appendChild(listItem);
+            } else {
+                alert('Error adding vehicle: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        alert('Please enter a vehicle name.');
+    }
+});
+        }
+
+        function displayGeofence(shapeData) {
+            if (shapeData.shape === 'rectangle') {
+                var bounds = new google.maps.LatLngBounds(
+                    new google.maps.LatLng(shapeData.bounds.south, shapeData.bounds.west),
+                    new google.maps.LatLng(shapeData.bounds.north, shapeData.bounds.east)
+                );
+                var rectangle = new google.maps.Rectangle({
+                    bounds: bounds,
+                    map: map,
+                    editable: false,
+                    draggable: false
+                });
+            } else if (shapeData.shape === 'circle') {
+                var circle = new google.maps.Circle({
+                    center: shapeData.path[0],
+                    radius: shapeData.path[1].lat,
+                    map: map,
+                    editable: false,
+                    draggable: false
+                });
+            } else {
+                var polygon = new google.maps.Polygon({
+                    paths: shapeData.path,
+                    map: map,
+                    editable: false,
+                    draggable: false
+                });
+            }
+        }
+
+        function loadVehicles() {
+            // Simulate loading vehicles from server
+            fetch('/get_vehicles')
+                .then(response => response.json())
+                .then(data => {
+                    var vehicleDropdown = document.getElementById('vehicleDropdown');
+                    vehicleDropdown.innerHTML = ''; // Clear existing options
+
+                    data.forEach(function(vehicle) {
+                        var option = document.createElement('option');
+                        option.value = vehicle.id;
+                        option.textContent = vehicle.name;
+                        vehicleDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function addVehicle() {
+            var selectedVehicleId = document.getElementById('vehicleDropdown').value;
+            var selectedVehicleName = document.getElementById('vehicleDropdown').selectedOptions[0].textContent;
+
+            if (!vehicles.some(vehicle => vehicle.id === selectedVehicleId)) {
+                vehicles.push({ id: selectedVehicleId, name: selectedVehicleName });
+
+                var vehicleList = document.getElementById('vehicleList');
+                var listItem = document.createElement('li');
+                listItem.textContent = selectedVehicleName;
+                vehicleList.appendChild(listItem);
+            } else {
+                alert('Vehicle already added to geofence.');
+            }
+        }
+
+        function filterVehicles() {
+            var filter = document.getElementById('searchVehicle').value.toLowerCase();
+            var dropdown = document.getElementById('vehicleDropdown');
+
+            Array.from(dropdown.options).forEach(function(option) {
+                var text = option.text.toLowerCase();
+                option.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPEMAElTxMzur0DK-Mh3fPUVmdQVBJu8A&libraries=drawing&callback=initMap" async defer></script>
+</body>
+</html>
